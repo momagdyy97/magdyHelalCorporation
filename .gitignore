@@ -1,0 +1,13 @@
+.env
+.DS_Store
+*.log
+docker/mysql-data/
+wp-content/upgrade/
+wp-content/cache/
+wp-content/uploads/
+!wp-content/themes/
+!wp-content/mu-plugins/
+node_modules/
+vendor/
+.idea/
+.vscode/

@@ -1,0 +1,88 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: magdi_hilal
+      MYSQL_USER: magdi
+      MYSQL_PASSWORD: magdi
+      MYSQL_ROOT_PASSWORD: magdi_root
+    volumes:
+      - db_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-umagdi", "-pmagdi"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  wordpress:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8088:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: magdi
+      WORDPRESS_DB_PASSWORD: magdi
+      WORDPRESS_DB_NAME: magdi_hilal
+      WORDPRESS_TABLE_PREFIX: mha_
+      MHA_SYNC_THEME: "0"
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_REDIS_HOST', 'redis');
+        define('WP_REDIS_PORT', 6379);
+        define('WP_REDIS_PREFIX', 'mha:');
+        define('WP_HOME', 'http://localhost:8088');
+        define('WP_SITEURL', 'http://localhost:8088');
+        define('FS_METHOD', 'direct');
+        define('MYSQL_CLIENT_FLAGS', 0);
+    volumes:
+      - wp_data:/var/www/html
+      - ./wp-content/themes/magdi-hilal-adco:/var/www/html/wp-content/themes/magdi-hilal-adco
+      - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  wpcli:
+    image: wordpress:cli-php8.2
+    volumes:
+      - wp_data:/var/www/html
+      - ./wp-content/themes/magdi-hilal-adco:/var/www/html/wp-content/themes/magdi-hilal-adco
+      - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./scripts:/scripts
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: magdi
+      WORDPRESS_DB_PASSWORD: magdi
+      WORDPRESS_DB_NAME: magdi_hilal
+      WORDPRESS_TABLE_PREFIX: mha_
+      WP_URL: http://localhost:8088
+      WP_ADMIN_USER: admin
+      WP_ADMIN_PASSWORD: admin
+      WP_ADMIN_EMAIL: magdy.hilal@co
+    depends_on:
+      - wordpress
+      - db
+    user: "33:33"
+    profiles:
+      - tools
+
+volumes:
+  db_data:
+  redis_data:
+  wp_data:

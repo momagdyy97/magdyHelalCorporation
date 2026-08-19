@@ -1,0 +1,7 @@
+.git
+.env
+README.md
+screenshots
+docs
+*.log
+.DS_Store
