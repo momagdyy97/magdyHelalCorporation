@@ -10,11 +10,10 @@
 <footer class="mha-footer">
     <div class="container">
         <div class="row">
-            <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="col-lg-4 mb-4 mb-lg-0 mha-footer-col">
                 <div class="mha-footer-brand">
-                    <img src="<?php echo esc_url(mha_img('logo-white.png')); ?>" alt="MH CORP" class="mha-footer-logo">
-                    <h3>مكتب مجدي هلال</h3>
-                    <p>Magdy Helal Corp — مكتب محاسبة ومراجعة واستشارات ضريبية في مدينة نصر، بقيادة المحاسب القانوني والمستشار الضريبي مجدي هلال وفريق يضم نحو 20 إلى 30 محاسباً.</p>
+                    <img src="<?php echo esc_url(mha_img('logo-white.png')); ?>" alt="M.H CORP" class="mha-footer-logo" width="220" height="40">
+                    <p>مكتب محاسبة ومراجعة واستشارات ضريبية في مدينة نصر، بقيادة المحاسب القانوني والمستشار الضريبي مجدي هلال وفريق يضم نحو 20 إلى 30 محاسباً.</p>
                     <p class="mha-footer-meta">
                         <?php echo mha_icon('pin'); ?>
                         <?php echo esc_html(mha_mod('mha_address', mha_defaults()['address'])); ?>
@@ -31,7 +30,7 @@
                     </p>
                 </div>
             </div>
-            <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="col-lg-4 mb-4 mb-lg-0 mha-footer-col">
                 <h4>تصفح الموقع</h4>
                 <?php
                 wp_nav_menu([
@@ -43,7 +42,7 @@
                 ]);
                 ?>
             </div>
-            <div class="col-lg-4">
+            <div class="col-lg-4 mha-footer-col">
                 <h4>الخدمة البريدية</h4>
                 <p>تواصل معنا ليصلك ملخص عن الأنظمة الضريبية وتحديثات المكتب.</p>
                 <?php mha_notice('newsletter'); ?>

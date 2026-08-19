@@ -40,11 +40,9 @@
 <header class="mha-header">
     <nav class="navbar navbar-expand-xl navbar-light">
         <div class="container">
-            <div class="navbar-brand mha-brand mb-0">
-                <a href="<?php echo esc_url(home_url('/')); ?>" class="custom-logo-link" rel="home">
-                    <img src="<?php echo esc_url(mha_img('logo.png')); ?>" alt="MH CORP" class="mha-brand-logo custom-logo" width="296" height="64">
-                </a>
-            </div>
+            <a class="navbar-brand mha-brand mb-0" href="<?php echo esc_url(home_url('/')); ?>" rel="home">
+                <img src="<?php echo esc_url(mha_img('logo.png')); ?>" alt="M.H CORP" class="mha-brand-logo custom-logo" width="240" height="40">
+            </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mhaNav" aria-controls="mhaNav" aria-expanded="false" aria-label="القائمة">
                 <span class="navbar-toggler-icon"></span>
             </button>
