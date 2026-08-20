@@ -15,7 +15,7 @@ if (function_exists('mb_internal_encoding')) {
     mb_internal_encoding('UTF-8');
 }
 
-define('MHA_CHAT_DB_VERSION', 1);
+define('MHA_CHAT_DB_VERSION', 2);
 define('MHA_CHAT_MAX_LEN', 1000);
 define('MHA_CHAT_RATE', 20);
 
@@ -89,6 +89,7 @@ function mha_chat_install($force_knowledge = false)
     ) {$charset};");
 
     mha_chat_seed_knowledge($force_knowledge);
+    mha_chat_purge_dev_hosts_from_knowledge();
     update_option('mha_chat_db_version', MHA_CHAT_DB_VERSION);
     return true;
 }
@@ -117,6 +118,31 @@ function mha_chat_seed_knowledge($force = false)
     }
 }
 
+function mha_chat_purge_dev_hosts_from_knowledge()
+{
+    global $wpdb;
+    $table  = mha_chat_table('knowledge');
+    $fields = ['body', 'source', 'title', 'tags'];
+    $froms  = [
+        'http://localhost:8088',
+        'https://localhost:8088',
+        'http://127.0.0.1:8088',
+        'https://127.0.0.1:8088',
+        'http://localhost',
+        'https://localhost',
+        'localhost:8088',
+        '127.0.0.1:8088',
+    ];
+    foreach ($fields as $field) {
+        foreach ($froms as $from) {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$table} SET {$field} = REPLACE({$field}, %s, '')",
+                $from
+            ));
+        }
+    }
+}
+
 function mha_chat_knowledge_corpus()
 {
     $disclaimer = ' هذه معلومات عامة للتعريف وليست استشارة قانونية أو ضريبية مرخّصة، ولا تغني عن فحص ملف المنشأة داخل المكتب.';
@@ -125,27 +151,19 @@ function mha_chat_knowledge_corpus()
         [
             'slug'   => 'site-map',
             'title'  => 'خريطة موقع مكتب مجدي هلال — M.H CORP',
-            'tags'   => 'موقع صفحات خدمات تواصل عن فريق عملاء مشاريع أخبار استشارة quote about services team clients projects news contact home',
+            'tags'   => 'موقع صفحات خدمات تواصل عن فريق عملاء مشاريع أخبار استشارة quote about /about/ services /services/ team /team/ clients /clients/ projects /projects/ news /news/ contact /contact/ home',
             'source' => 'موقع M.H CORP',
-            'body'   => 'مكتب مجدي هلال للمحاسبة والمراجعة (M.H CORP) في مدينة نصر، القاهرة. المدير: المحاسب القانوني والمستشار الضريبي مجدي هلال، مع فريق نحو 20 إلى 30 محاسباً.' . "\n"
-                . 'صفحات الموقع:' . "\n"
-                . '- الرئيسية: {{url:home}}' . "\n"
-                . '- من نحن: {{url:about}}' . "\n"
-                . '- خدماتنا (ضرائب، مراجعة، أنظمة محاسبية، استشارات): {{url:services}}' . "\n"
-                . '- فريق العمل: {{url:team}}' . "\n"
-                . '- عملاؤنا: {{url:clients}}' . "\n"
-                . '- مشاريعنا: {{url:projects}}' . "\n"
-                . '- الأخبار: {{url:news}}' . "\n"
-                . '- تواصل معنا / اطلب استشارة: {{url:contact}}' . "\n"
+            'body'   => 'مكتب مجدي هلال للمحاسبة والمراجعة (M.H CORP) في مدينة نصر، القاهرة. المدير: المحاسب القانوني والمستشار الضريبي مجدي هلال، مع فريق نحو 20 إلى 30 محاسباً. '
+                . 'صفحات الموقع: الرئيسية، من نحن، خدماتنا (ضرائب ومراجعة وأنظمة محاسبية واستشارات)، فريق العمل، عملاؤنا، مشاريعنا، الأخبار، وتواصل معنا. '
                 . 'الهاتف: {{phone}} — البريد: {{email}} — العنوان: {{address}} — العمل: {{hours}}.'
                 . $disclaimer,
         ],
         [
             'slug'   => 'contact-hours',
             'title'  => 'بيانات التواصل وساعات العمل',
-            'tags'   => 'تواصل هاتف بريد عنوان واتساب ساعات contact phone email address whatsapp hours quote موعد اتصال',
+            'tags'   => 'تواصل هاتف بريد عنوان واتساب ساعات contact phone email address whatsapp hours quote موعد اتصال /contact/',
             'source' => 'موقع M.H CORP',
-            'body'   => 'للتواصل مع مكتب مجدي هلال — M.H CORP: الهاتف {{phone}} (يُكتب من اليسار لليمين)، البريد {{email}}، العنوان {{address}}. ساعات العمل {{hours}}. يمكن طلب استشارة من صفحة التواصل {{url:contact}} أو عبر واتساب على الرقم نفسه. لا يوجد حساب فيسبوك للمكتب على هذا الموقع.',
+            'body'   => 'للتواصل مع مكتب مجدي هلال — M.H CORP: الهاتف {{phone}} (يُكتب من اليسار لليمين)، البريد {{email}}، العنوان {{address}}. ساعات العمل {{hours}}. يمكن طلب استشارة من صفحة «تواصل معنا» أو عبر واتساب على الرقم نفسه. لا يوجد حساب فيسبوك للمكتب على هذا الموقع.',
         ],
         [
             'slug'   => 'income-tax-91-2005',
@@ -166,7 +184,7 @@ function mha_chat_knowledge_corpus()
             'title'  => 'منظومة الفاتورة الإلكترونية (مصلحة الضرائب المصرية)',
             'tags'   => 'فاتورة إلكترونية منظومة eta مصلحة الضرائب إصدار تكامل توقيع إلكتروني einvoice e-invoice',
             'source' => 'ملخص عام — منظومة الفاتورة الإلكترونية',
-            'body'   => 'منظومة الفاتورة الإلكترونية لدى مصلحة الضرائب المصرية تُلزم المنشآت المشمولة بالمراحل المقررة بإصدار فواتير البيع بين المسجّلين عبر المنظومة واعتمادها. عملياً تحتاج الشركة: تسجيلاً على المنظومة، توقيعاً إلكترونياً، ووسيلة إصدار (تكامل مع نظام الحسابات أو بوابة المصلحة). بيانات المشتري — رقم التسجيل والعنوان — يجب أن تطابق ما لدى المصلحة وإلا رُفضت الوثيقة. الرقم الداخلي للفاتورة يُربط بالقيد المحاسبي. التأخير أو الرفض لا يُسوَّى بإيصال ورقي في آخر الشهر. الفاتورة الإلكترونية قناة إثبات؛ صحة الوعاء والإقرار تبقى مسؤولية مستقلة. خدمة الأعمال الضريبية في المكتب تشمل متابعة المنظومة مع الدورة المستندية: {{url:services}}.',
+            'body'   => 'منظومة الفاتورة الإلكترونية لدى مصلحة الضرائب المصرية تُلزم المنشآت المشمولة بالمراحل المقررة بإصدار فواتير البيع بين المسجّلين عبر المنظومة واعتمادها. عملياً تحتاج الشركة: تسجيلاً على المنظومة، توقيعاً إلكترونياً، ووسيلة إصدار (تكامل مع نظام الحسابات أو بوابة المصلحة). بيانات المشتري — رقم التسجيل والعنوان — يجب أن تطابق ما لدى المصلحة وإلا رُفضت الوثيقة. الرقم الداخلي للفاتورة يُربط بالقيد المحاسبي. التأخير أو الرفض لا يُسوَّى بإيصال ورقي في آخر الشهر. الفاتورة الإلكترونية قناة إثبات؛ صحة الوعاء والإقرار تبقى مسؤولية مستقلة. خدمة الأعمال الضريبية في المكتب تشمل متابعة المنظومة مع الدورة المستندية من صفحة خدماتنا.',
         ],
         [
             'slug'   => 'e-receipt-eta',
@@ -194,73 +212,111 @@ function mha_chat_knowledge_corpus()
             'title'  => 'قانون الشركات 159 لسنة 1981 والاستثمار',
             'tags'   => 'شركات قانون 159 تأسيس استثمار سجل تجاري جمعية عمومية شركاء investment',
             'source' => 'ملخص عام — قانون 159/1981 وإطار الاستثمار',
-            'body'   => 'قانون شركات المساهمة وشركات التوصية بالأسهم والشركات ذات المسؤولية المحدودة رقم 159 لسنة 1981، مع تعديلاته، ينظّم التأسيس والحوكمة الداخلية لأشكال شائعة من الشركات في مصر. إلى جانبه توجد قوانين استثمار لاحقة (ومنها قانون الاستثمار رقم 72 لسنة 2017) تمنح حوافز وإجراءات لمن ينطبق عليه النظام. التأسيس يحتاج عقداً ونظاماً، وتسجيلاً، ودفاتر، وفي كثير من الحالات مراقب حسابات وفق الشكل القانوني. الاستشارة المالية في المكتب تساعد على ترتيب الهيكل والدورة المحاسبية بعد التأسيس؛ التراخيص والسجل تبقى لدى الجهات المختصة. صفحة الخدمات: {{url:services}} وطلب الاستشارة: {{url:contact}}.',
+            'body'   => 'قانون شركات المساهمة وشركات التوصية بالأسهم والشركات ذات المسؤولية المحدودة رقم 159 لسنة 1981، مع تعديلاته، ينظّم التأسيس والحوكمة الداخلية لأشكال شائعة من الشركات في مصر. إلى جانبه توجد قوانين استثمار لاحقة (ومنها قانون الاستثمار رقم 72 لسنة 2017) تمنح حوافز وإجراءات لمن ينطبق عليه النظام. التأسيس يحتاج عقداً ونظاماً، وتسجيلاً، ودفاتر، وفي كثير من الحالات مراقب حسابات وفق الشكل القانوني. الاستشارة المالية في المكتب تساعد على ترتيب الهيكل والدورة المحاسبية بعد التأسيس؛ التراخيص والسجل تبقى لدى الجهات المختصة. التفاصيل في صفحة خدماتنا، وطلب الاستشارة من صفحة تواصل معنا.',
         ],
         [
             'slug'   => 'audit-vs-tax-exam',
             'title'  => 'المراجعة والفحص الضريبي: اختلاف الهدف',
             'tags'   => 'مراجعة تدقيق فحص ضريبي رقابة داخلية قوائم مالية audit review examination',
             'source' => 'ملخص مهني — المراجعة والفحص',
-            'body'   => 'المراجعة (الخارجية أو الداخلية) تقيّم ما إذا كانت القوائم تعرض المركز والأداء بعدالة وفق إطار التقرير المالي، وتختبر الرقابة الداخلية والمخاطر. الفحص الضريبي الذي تجريه مصلحة الضرائب يتحقق من صحة الإقرار والوعاء والمستندات النظامية. الدفاتر واحدة؛ السؤال مختلف. الاستعداد للفحص: ملف إقرارات ونماذج خصم ومراسلات المنظومة، وربط الأرقام الجوهرية بمستند، ومذكرة فروق بين الربح المحاسبي والضريبي. تقرير المراجعة لا يُغني عن الرد على طلبات المأمور، وإقرار الضريبة لا يُغني عن رأي المراجع حين يُطلب. خدمة المراجعة في المكتب: {{url:services}}.',
+            'body'   => 'المراجعة (الخارجية أو الداخلية) تقيّم ما إذا كانت القوائم تعرض المركز والأداء بعدالة وفق إطار التقرير المالي، وتختبر الرقابة الداخلية والمخاطر. الفحص الضريبي الذي تجريه مصلحة الضرائب يتحقق من صحة الإقرار والوعاء والمستندات النظامية. الدفاتر واحدة؛ السؤال مختلف. الاستعداد للفحص: ملف إقرارات ونماذج خصم ومراسلات المنظومة، وربط الأرقام الجوهرية بمستند، ومذكرة فروق بين الربح المحاسبي والضريبي. تقرير المراجعة لا يُغني عن الرد على طلبات المأمور، وإقرار الضريبة لا يُغني عن رأي المراجع حين يُطلب. خدمة المراجعة في المكتب موضّحة في صفحة خدماتنا.',
         ],
         [
             'slug'   => 'bookkeeping-statements',
             'title'  => 'إمساك الدفاتر والقوائم المالية والإقفال',
             'tags'   => 'دفاتر محاسبة إقفال قوائم ميزان مراجعة مخزون عملاء موردين bookkeeping statements closing',
             'source' => 'ملخص مهني — المحاسبة',
-            'body'   => 'إمساك الدفاتر يعني مستنداً لكل قيد، ودليل حسابات ثابت، ومطابقة البنوك والنقدية، ومتابعة العملاء والموردين، ومعالجة المخزون بما يناسب النشاط، وإقفالاً شهرياً للحسابات الوسيطة. القوائم المالية تُشتق من ميزان مراجعة مغلق لا من جداول جانبية. البنوك والشركاء يلاحظون الحساب الجاري غير المفسَّر والحركة المعلّقة. معايير العرض السارية على المنشأة تتطلب إفصاحاً أوضح من «صافي الربح» في سطر. المكتب يبني الدورة من المستند إلى التقرير ضمن خدمة الأنظمة المحاسبية: {{url:services}}.',
+            'body'   => 'إمساك الدفاتر يعني مستنداً لكل قيد، ودليل حسابات ثابت، ومطابقة البنوك والنقدية، ومتابعة العملاء والموردين، ومعالجة المخزون بما يناسب النشاط، وإقفالاً شهرياً للحسابات الوسيطة. القوائم المالية تُشتق من ميزان مراجعة مغلق لا من جداول جانبية. البنوك والشركاء يلاحظون الحساب الجاري غير المفسَّر والحركة المعلّقة. معايير العرض السارية على المنشأة تتطلب إفصاحاً أوضح من «صافي الربح» في سطر. المكتب يبني الدورة من المستند إلى التقرير ضمن خدمة الأنظمة المحاسبية في صفحة خدماتنا.',
         ],
         [
             'slug'   => 'cbe-economy-literacy',
             'title'  => 'البنك المركزي والتضخم وأسعار العائد — تثقيف اقتصادي',
             'tags'   => 'بنك مركزي تضخم فائدة اقتصاد جنيه صرف سياسة نقدية cbe inflation interest economy',
             'source' => 'ملخص تثقيفي — ليس نصيحة استثمار',
-            'body'   => 'البنك المركزي المصري يدير السياسة النقدية مستهدفاً استقرار الأسعار. التضخم يغيّر القوة الشرائية للتدفقات؛ أسعار العائد تغيّر تكلفة التمويل؛ سعر الصرف يغيّر قياس الأصول والالتزامات بالعملة الأجنبية. المحاسب يُظهر الأثر في الفوائد وفروق العملة وتقييم المخزون عند تغيّر السوق، دون التنبؤ بقرار اللجنة. هذا النص للتثقيف العام وليس توصية بشراء أو بيع أي أداة مالية ولا بديلاً عن مستشار استثمار مرخّص. لمتابعة السياق عبر مقالات المكتب: {{url:news}}.',
+            'body'   => 'البنك المركزي المصري يدير السياسة النقدية مستهدفاً استقرار الأسعار. التضخم يغيّر القوة الشرائية للتدفقات؛ أسعار العائد تغيّر تكلفة التمويل؛ سعر الصرف يغيّر قياس الأصول والالتزامات بالعملة الأجنبية. المحاسب يُظهر الأثر في الفوائد وفروق العملة وتقييم المخزون عند تغيّر السوق، دون التنبؤ بقرار اللجنة. هذا النص للتثقيف العام وليس توصية بشراء أو بيع أي أداة مالية ولا بديلاً عن مستشار استثمار مرخّص. لمتابعة السياق يمكن قراءة مقالات المكتب من صفحة الأخبار.',
         ],
         [
             'slug'   => 'services-tax',
             'title'  => 'خدمة الأعمال الضريبية في المكتب',
             'tags'   => 'خدمة ضرائب إقرارات فحص قيمة مضافة فاتورة',
             'source' => 'موقع M.H CORP',
-            'body'   => 'قسم الضرائب في مكتب مجدي هلال يتابع الإقرارات والفحص والقيمة المضافة والمنظومات الإلكترونية بما يناسب حجم الشركة. التفاصيل: {{url:services}} — وللتواصل: {{url:contact}}.',
+            'body'   => 'قسم الضرائب في مكتب مجدي هلال يتابع الإقرارات والفحص والقيمة المضافة والمنظومات الإلكترونية بما يناسب حجم الشركة. التفاصيل في صفحة خدماتنا، وللتواصل من صفحة تواصل معنا.',
         ],
         [
             'slug'   => 'services-audit',
             'title'  => 'خدمة المراجعة والتدقيق في المكتب',
             'tags'   => 'خدمة مراجعة تدقيق رقابة قوائم',
             'source' => 'موقع M.H CORP',
-            'body'   => 'المراجعة في المكتب تركز على المخاطر والضوابط لا على الشكل فقط: تخطيط، تقييم رقابة داخلية، وتقارير للإدارة. التفاصيل: {{url:services}} ومشاريع مماثلة: {{url:projects}}.',
+            'body'   => 'المراجعة في المكتب تركز على المخاطر والضوابط لا على الشكل فقط: تخطيط، تقييم رقابة داخلية، وتقارير للإدارة. التفاصيل في صفحة خدماتنا، ومشاريع مماثلة في صفحة مشاريعنا.',
         ],
         [
             'slug'   => 'services-accounting',
             'title'  => 'خدمة الأنظمة المحاسبية في المكتب',
             'tags'   => 'خدمة محاسبة دفاتر تقارير شهرية أنظمة',
             'source' => 'موقع M.H CORP',
-            'body'   => 'الأنظمة المحاسبية تشمل إمساك الدفاتر والدورة المستندية والتقارير الشهرية التي تساعد الإدارة على قراءة المركز المالي. التفاصيل: {{url:services}}.',
+            'body'   => 'الأنظمة المحاسبية تشمل إمساك الدفاتر والدورة المستندية والتقارير الشهرية التي تساعد الإدارة على قراءة المركز المالي. التفاصيل في صفحة خدماتنا.',
         ],
         [
             'slug'   => 'about-firm',
             'title'  => 'عن مكتب مجدي هلال',
             'tags'   => 'من نحن مكتب مجدي هلال فريق مدينة نصر about firm team',
             'source' => 'موقع M.H CORP',
-            'body'   => 'مكتب مهني للمحاسبة والمراجعة والاستشارات الضريبية في {{address}}. يقوده مجدي هلال، ويعمل فيه فريق يضم نحو 20 إلى 30 محاسباً. نبذة أوفى: {{url:about}} — الفريق: {{url:team}} — العملاء: {{url:clients}}.',
+            'body'   => 'مكتب مهني للمحاسبة والمراجعة والاستشارات الضريبية في {{address}}. يقوده مجدي هلال، ويعمل فيه فريق يضم نحو 20 إلى 30 محاسباً. نبذة أوفى في صفحة من نحن، والفريق في صفحة فريق العمل، والعملاء في صفحة عملاؤنا.',
         ],
     ];
 }
 
-function mha_chat_expand($text)
+function mha_chat_page_url($slug)
+{
+    $slug = trim((string) $slug, '/');
+    if ($slug === '' || $slug === 'home') {
+        return home_url('/');
+    }
+    return home_url('/' . $slug . '/');
+}
+
+function mha_chat_public_origin()
+{
+    return untrailingslashit(home_url());
+}
+
+function mha_chat_rewrite_dev_hosts($text)
+{
+    $origin = mha_chat_public_origin();
+    $text   = (string) $text;
+    $text   = preg_replace(
+        [
+            '#https?://localhost:8088#i',
+            '#https?://127\.0\.0\.1:8088#i',
+            '#https?://localhost(?!:)#i',
+            '#https?://127\.0\.0\.1(?!:)#i',
+        ],
+        $origin,
+        $text
+    );
+    $bare = preg_replace('#^https?://#i', '', $origin);
+    if (strcasecmp($bare, 'localhost:8088') !== 0) {
+        $text = str_ireplace('localhost:8088', $bare, $text);
+    }
+    if (strcasecmp($bare, '127.0.0.1:8088') !== 0) {
+        $text = str_ireplace('127.0.0.1:8088', $bare, $text);
+    }
+    return $text;
+}
+
+function mha_chat_expand_facts($text)
 {
     $d = mha_defaults();
     $map = [
-        '{{url:home}}'     => home_url('/'),
-        '{{url:about}}'    => mha_page_url('about'),
-        '{{url:services}}' => mha_page_url('services'),
-        '{{url:team}}'     => mha_page_url('team'),
-        '{{url:clients}}'  => mha_page_url('clients'),
-        '{{url:projects}}' => mha_page_url('projects'),
-        '{{url:news}}'     => function_exists('mha_news_url') ? mha_news_url() : mha_page_url('news'),
-        '{{url:contact}}'  => mha_page_url('contact'),
-        '{{url:quote}}'    => mha_page_url('contact'),
+        '{{url:home}}'     => '',
+        '{{url:about}}'    => '',
+        '{{url:services}}' => '',
+        '{{url:team}}'     => '',
+        '{{url:clients}}'  => '',
+        '{{url:projects}}' => '',
+        '{{url:news}}'     => '',
+        '{{url:contact}}'  => '',
+        '{{url:quote}}'    => '',
         '{{phone}}'        => mha_phone_display(),
         '{{email}}'        => mha_mod('mha_email', $d['email']),
         '{{address}}'      => mha_mod('mha_address', $d['address']),
@@ -268,6 +324,59 @@ function mha_chat_expand($text)
         '{{firm}}'         => $d['firm'],
     ];
     return str_replace(array_keys($map), array_values($map), (string) $text);
+}
+
+function mha_chat_scrub_reply($text)
+{
+    $text = mha_chat_expand_facts($text);
+    $text = mha_chat_rewrite_dev_hosts($text);
+    $text = preg_replace('#\[([^\]]+)\]\(\s*https?://(?:localhost|127\.0\.0\.1)(?::\d+)?[^)]*\)#i', '$1', $text);
+    $text = preg_replace('#https?://(?:localhost|127\.0\.0\.1)(?::\d+)?#i', '', $text);
+    $text = preg_replace('#\b(?:localhost|127\.0\.0\.1):\d+\b#i', '', $text);
+    $text = preg_replace('#\b(?:localhost|127\.0\.0\.1)\b#i', '', $text);
+    $text = preg_replace('/:8088\b/', '', $text);
+    $text = preg_replace('/:\s*(?=\n|$)/u', '', $text);
+    $text = preg_replace('/[ \t]{2,}/u', ' ', $text);
+    return trim((string) $text);
+}
+
+function mha_chat_sanitize_links(array $links)
+{
+    $origin = mha_chat_public_origin();
+    $out    = [];
+    foreach ($links as $item) {
+        $title = trim((string) ($item['title'] ?? ''));
+        $url   = trim((string) ($item['url'] ?? ''));
+        if ($title === '' || $url === '') {
+            continue;
+        }
+        if (stripos($url, $origin . '/') !== 0 && strcasecmp($url, $origin) !== 0) {
+            $url = mha_chat_rewrite_dev_hosts($url);
+        }
+        $out[] = ['title' => $title, 'url' => $url];
+    }
+    return $out;
+}
+
+function mha_chat_is_contact_query($message)
+{
+    $n = mha_chat_norm($message);
+    if ($n === '') {
+        return false;
+    }
+    $needles = [
+        'تواصل معنا', 'تواصل', 'اتصل', 'اتصال', 'هاتف', 'موبايل',
+        'عنوان', 'وين المكتب', 'فين المكتب', 'موقعكم', 'ساعات', 'واتساب',
+        'ايميل', 'بريد', 'موعد', 'طلب استشاره', 'اطلب استشاره',
+        'contact', 'phone', 'email', 'address', 'whatsapp', 'hours',
+        'how to contact', 'call us',
+    ];
+    foreach ($needles as $needle) {
+        if ($needle !== '' && mb_strpos($n, mha_chat_norm($needle)) !== false) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function mha_chat_norm($text)
@@ -438,17 +547,23 @@ function mha_chat_retrieve($message, $limit = 4)
     return array_slice($scored, 0, $limit);
 }
 
-function mha_chat_links_for($agent, array $chunks)
+function mha_chat_links_for($agent, array $chunks, $message = '')
 {
+    if (mha_chat_is_contact_query($message)) {
+        return [
+            ['title' => 'تواصل معنا', 'url' => mha_chat_page_url('contact')],
+        ];
+    }
+
     $catalog = [
-        ['title' => 'من نحن', 'url' => mha_page_url('about'), 'keys' => ['about', 'من نحن', 'مكتب']],
-        ['title' => 'خدماتنا', 'url' => mha_page_url('services'), 'keys' => ['service', 'خدم', 'ضريب', 'مراجع', 'محاسب']],
-        ['title' => 'فريق العمل', 'url' => mha_page_url('team'), 'keys' => ['team', 'فريق']],
-        ['title' => 'عملاؤنا', 'url' => mha_page_url('clients'), 'keys' => ['client', 'عملاء']],
-        ['title' => 'مشاريعنا', 'url' => mha_page_url('projects'), 'keys' => ['project', 'مشاريع']],
-        ['title' => 'الأخبار', 'url' => function_exists('mha_news_url') ? mha_news_url() : mha_page_url('news'), 'keys' => ['news', 'أخبار', 'اقتصاد']],
-        ['title' => 'تواصل معنا', 'url' => mha_page_url('contact'), 'keys' => ['contact', 'تواصل', 'هاتف']],
-        ['title' => 'اطلب استشارة', 'url' => mha_page_url('contact'), 'keys' => ['quote', 'استشار']],
+        ['title' => 'من نحن', 'url' => mha_chat_page_url('about'), 'keys' => ['about', 'من نحن', 'مكتب']],
+        ['title' => 'خدماتنا', 'url' => mha_chat_page_url('services'), 'keys' => ['service', 'خدم', 'ضريب', 'مراجع', 'محاسب']],
+        ['title' => 'فريق العمل', 'url' => mha_chat_page_url('team'), 'keys' => ['team', 'فريق']],
+        ['title' => 'عملاؤنا', 'url' => mha_chat_page_url('clients'), 'keys' => ['client', 'عملاء']],
+        ['title' => 'مشاريعنا', 'url' => mha_chat_page_url('projects'), 'keys' => ['project', 'مشاريع']],
+        ['title' => 'الأخبار', 'url' => mha_chat_page_url('news'), 'keys' => ['news', 'أخبار', 'اقتصاد']],
+        ['title' => 'تواصل معنا', 'url' => mha_chat_page_url('contact'), 'keys' => ['contact', 'تواصل', 'هاتف']],
+        ['title' => 'اطلب استشارة', 'url' => mha_chat_page_url('contact'), 'keys' => ['quote', 'استشار']],
     ];
 
     $want = [
@@ -467,7 +582,7 @@ function mha_chat_links_for($agent, array $chunks)
         }
     }
 
-    $blob = mha_chat_norm(wp_json_encode($chunks, JSON_UNESCAPED_UNICODE));
+    $blob = mha_chat_norm(wp_json_encode($chunks, JSON_UNESCAPED_UNICODE) . ' ' . $message);
     foreach ($catalog as $item) {
         if (count($out) >= 4) {
             break;
@@ -485,7 +600,7 @@ function mha_chat_links_for($agent, array $chunks)
         }
     }
 
-    return $out;
+    return mha_chat_sanitize_links($out);
 }
 
 function mha_chat_english_line($agent)
@@ -541,6 +656,22 @@ function mha_chat_compose($agent, $message, array $chunks, $lang)
         return implode("\n\n", $parts);
     }
 
+    if (mha_chat_is_contact_query($message)) {
+        $parts[] = 'يسعد مكتب مجدي هلال — M.H CORP استقبال استفساركم.';
+        $parts[] = sprintf(
+            'الهاتف: %s — البريد: %s — العنوان: %s. ساعات العمل: %s. يمكنكم الكتابة من صفحة «تواصل معنا».',
+            mha_phone_display(),
+            mha_mod('mha_email', $d['email']),
+            mha_mod('mha_address', $d['address']),
+            mha_mod('mha_hours', $d['hours'])
+        );
+        $parts[] = 'المعلومات أعلاه عامة. ملف كل منشأة يُراجع داخل المكتب قبل أي إجراء.';
+        if ($lang === 'en') {
+            $parts[] = mha_chat_english_line('guide');
+        }
+        return implode("\n\n", $parts);
+    }
+
     $intros = [
         'guide'      => 'يسعد مكتب مجدي هلال — M.H CORP توجيهكم إلى الخدمة أو الصفحة المناسبة.',
         'tax'        => 'بخصوص الاستفسار الضريبي، نقدّم إطاراً عاماً من الأنظمة المصرية، دون أن يُعد ذلك رأياً ملزماً لملف معيّن.',
@@ -555,8 +686,13 @@ function mha_chat_compose($agent, $message, array $chunks, $lang)
         if ($used >= 2) {
             break;
         }
-        $body = mha_chat_expand($chunk['body'] ?? '');
-        $body = mha_chat_cut($body, 420);
+        $slug = (string) ($chunk['slug'] ?? '');
+        if ($slug === 'site-map') {
+            $body = 'صفحات: من نحن، خدماتنا، فريق العمل، عملاؤنا، مشاريعنا، الأخبار، وتواصل معنا.';
+        } else {
+            $body = mha_chat_cut(mha_chat_expand_facts($chunk['body'] ?? ''), 420);
+        }
+        $body = mha_chat_scrub_reply($body);
         if ($body === '') {
             continue;
         }
@@ -610,10 +746,10 @@ function mha_chat_openai_reply($message, array $chunks, $agent, $lang)
 
     $context = '';
     foreach ($chunks as $chunk) {
-        $context .= '# ' . ($chunk['title'] ?? '') . "\n" . mha_chat_expand($chunk['body'] ?? '') . "\n\n";
+        $context .= '# ' . ($chunk['title'] ?? '') . "\n" . mha_chat_expand_facts($chunk['body'] ?? '') . "\n\n";
     }
 
-    $system = 'أنت مستشار مهني لمكتب مجدي هلال — M.H CORP في مدينة نصر، القاهرة. أجب بالعربية الفصحى المهنية أساساً. إذا كان سؤال المستخدم بالإنجليزية أضف سطراً إنجليزياً قصيراً في النهاية. لا تختلق مواد قانونية. اعتمد فقط على السياق المعطى وبيانات المكتب. أوضح أن الكلام معلومات عامة وليست استشارة قانونية مرخّصة. لا تذكر فيسبوك ولا إبراهيم هلال.';
+    $system = 'أنت مستشار مهني لمكتب مجدي هلال — M.H CORP في مدينة نصر، القاهرة. أجب بالعربية الفصحى المهنية أساساً. إذا كان سؤال المستخدم بالإنجليزية أضف سطراً إنجليزياً قصيراً في النهاية. لا تختلق مواد قانونية. اعتمد فقط على السياق المعطى وبيانات المكتب. أوضح أن الكلام معلومات عامة وليست استشارة قانونية مرخّصة. لا تذكر فيسبوك ولا إبراهيم هلال. لا تدرج روابط URL في نص الرد ولا تذكر localhost أو 127.0.0.1 أو أرقام المنافذ. اذكر أسماء الصفحات بالعربية فقط (من نحن، خدماتنا، تواصل معنا)؛ الأزرار تظهر منفصلة.';
 
     $payload = [
         'model'       => 'gpt-4o-mini',
@@ -746,9 +882,11 @@ function mha_chat_respond($session_token, $message)
     $lang    = mha_chat_detect_lang($message);
     $agent   = mha_chat_route_agent($message);
     $chunks  = mha_chat_retrieve($message);
-    $links   = mha_chat_links_for($agent, $chunks);
-    $openai  = mha_chat_openai_reply($message, $chunks, $agent, $lang);
+    $links   = mha_chat_sanitize_links(mha_chat_links_for($agent, $chunks, $message));
+    $use_ai  = !mha_chat_is_contact_query($message) && !mha_chat_is_greeting($message);
+    $openai  = $use_ai ? mha_chat_openai_reply($message, $chunks, $agent, $lang) : null;
     $reply   = is_string($openai) && $openai !== '' ? $openai : mha_chat_compose($agent, $message, $chunks, $lang);
+    $reply   = mha_chat_scrub_reply($reply);
     $session = mha_chat_get_session($session_token, $lang);
 
     mha_chat_add_message((int) $session['id'], 'user', '', $message);
@@ -946,22 +1084,10 @@ function mha_chat_render_widget()
                 <button type="button" data-chip="تواصل معنا">تواصل معنا</button>
             </div>
             <div class="mha-chat-composer">
-                <div class="mha-chat-attach-preview" id="mhaChatAttachPreview" hidden>
-                    <img id="mhaChatAttachThumb" alt="" width="40" height="40">
-                    <span id="mhaChatAttachName"></span>
-                    <button type="button" class="mha-chat-attach-clear" id="mhaChatAttachClear">إزالة</button>
-                </div>
                 <form class="mha-chat-form" id="mhaChatForm" action="#" method="post">
                     <label class="sr-only" for="mhaChatInput">رسالتكم</label>
                     <input id="mhaChatInput" type="text" name="message" maxlength="<?php echo (int) MHA_CHAT_MAX_LEN; ?>" dir="rtl" autocomplete="off" placeholder="اكتب هنا...">
-                    <input id="mhaChatFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
-                    <button type="button" class="mha-chat-tool" id="mhaChatImage" aria-label="إرفاق صورة">
-                        <?php echo mha_icon('image'); ?>
-                    </button>
-                    <button type="button" class="mha-chat-tool" id="mhaChatMic" aria-label="إدخال صوتي">
-                        <?php echo mha_icon('mic'); ?>
-                    </button>
-                    <button type="submit" class="mha-chat-send" aria-label="إرسال"><?php echo mha_icon('send'); ?></button>
+                    <button type="submit" class="mha-chat-send" id="mhaChatSend" aria-label="إرسال"><?php echo mha_icon('send'); ?></button>
                 </form>
                 <p class="mha-chat-note">معلومات عامة وليست استشارة قانونية. تُحفظ المحادثة في قاعدة بيانات المكتب.</p>
             </div>

@@ -3,29 +3,23 @@
 
   var cfg = window.mhaChat || {};
   var storageKey = "mha_chat_session";
-  var root;
   var panel;
   var logEl;
   var form;
   var input;
+  var sendBtn;
   var toastEl;
   var agentEl;
   var toggleBtn;
-  var fileInput;
-  var attachPreview;
-  var attachThumb;
-  var attachName;
-  var micBtn;
   var lastFocus = null;
   var sending = false;
-  var pendingImage = null;
-  var recognition = null;
-  var listening = false;
-  var canSpeak = typeof window.speechSynthesis !== "undefined";
-  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   function qs(sel, ctx) {
     return (ctx || document).querySelector(sel);
+  }
+
+  function chipButtons() {
+    return document.querySelectorAll("#mhaChatChips [data-chip]");
   }
 
   function sessionToken() {
@@ -103,25 +97,7 @@
     }
   }
 
-  function safeDataUrl(url) {
-    return /^data:image\/(jpeg|jpg|png|webp|gif);base64,/i.test(String(url || ""));
-  }
-
-  function speakText(text) {
-    if (!canSpeak) {
-      return;
-    }
-    try {
-      window.speechSynthesis.cancel();
-      var u = new window.SpeechSynthesisUtterance(String(text || ""));
-      u.lang = "ar-EG";
-      window.speechSynthesis.speak(u);
-    } catch (e) {
-      /* ignore */
-    }
-  }
-
-  function addMessage(role, text, links, imageUrl) {
+  function addMessage(role, text, links) {
     if (!logEl) {
       return;
     }
@@ -141,26 +117,9 @@
     }
 
     var bubble = el("div", "mha-chat-bubble");
-    if (imageUrl && safeDataUrl(imageUrl)) {
-      var img = el("img", "mha-chat-preview");
-      img.src = imageUrl;
-      img.alt = "صورة مرفقة";
-      bubble.appendChild(img);
-    }
     var p = el("p");
     fillText(p, text);
     bubble.appendChild(p);
-
-    if (role === "bot" && canSpeak && text) {
-      var speakBtn = el("button", "mha-chat-speak");
-      speakBtn.type = "button";
-      speakBtn.setAttribute("aria-label", "استماع");
-      speakBtn.appendChild(speakerIcon());
-      speakBtn.addEventListener("click", function () {
-        speakText(text);
-      });
-      bubble.appendChild(speakBtn);
-    }
 
     if (links && links.length) {
       var list = el("ul", "mha-chat-links");
@@ -183,20 +142,6 @@
     row.appendChild(bubble);
     logEl.appendChild(row);
     logEl.scrollTop = logEl.scrollHeight;
-  }
-
-  function speakerIcon() {
-    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("aria-hidden", "true");
-    var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("fill", "currentColor");
-    path.setAttribute(
-      "d",
-      "M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4v8a4.5 4.5 0 002.5-4z"
-    );
-    svg.appendChild(path);
-    return svg;
   }
 
   function setWelcome() {
@@ -239,6 +184,19 @@
     logEl.scrollTop = logEl.scrollHeight;
   }
 
+  function setBusy(on) {
+    sending = !!on;
+    if (sendBtn) {
+      sendBtn.disabled = sending;
+    }
+    if (form) {
+      form.setAttribute("aria-busy", sending ? "true" : "false");
+    }
+    chipButtons().forEach(function (btn) {
+      btn.disabled = sending;
+    });
+  }
+
   function isOpen() {
     return panel && panel.classList.contains("is-open");
   }
@@ -268,14 +226,6 @@
     panel.classList.remove("is-open");
     panel.setAttribute("aria-hidden", "true");
     document.body.classList.remove("mha-chat-open");
-    stopMic();
-    if (canSpeak) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch (e) {
-        /* ignore */
-      }
-    }
     if (toggleBtn) {
       toggleBtn.setAttribute("aria-expanded", "false");
       toggleBtn.focus();
@@ -295,36 +245,15 @@
   function resetChat() {
     clearSession();
     clearLog();
-    clearAttach();
+    setBusy(false);
     if (agentEl) {
       agentEl.textContent = "مرشد الموقع";
     }
     setWelcome();
   }
 
-  function clearAttach() {
-    pendingImage = null;
-    if (fileInput) {
-      fileInput.value = "";
-    }
-    if (attachPreview) {
-      attachPreview.hidden = true;
-      attachPreview.classList.remove("is-on");
-    }
-    if (attachThumb) {
-      attachThumb.removeAttribute("src");
-    }
-    if (attachName) {
-      attachName.textContent = "";
-    }
-  }
-
   function send(text) {
     var message = String(text || "").trim();
-    var imageUrl = pendingImage ? pendingImage.dataUrl : "";
-    if (!message && imageUrl) {
-      message = "أرفق صورة";
-    }
     if (!message || sending) {
       return;
     }
@@ -332,9 +261,8 @@
     if (message.length > maxLen) {
       message = message.slice(0, maxLen);
     }
-    sending = true;
-    addMessage("user", message, [], imageUrl);
-    clearAttach();
+    setBusy(true);
+    addMessage("user", message);
     setTyping(true);
     if (input) {
       input.value = "";
@@ -385,109 +313,24 @@
         showToast("انقطع الاتصال. تحققوا من الشبكة ثم أعيدوا المحاولة.");
       })
       .then(function () {
-        sending = false;
+        setBusy(false);
+        if (input && isOpen()) {
+          input.focus();
+        }
       });
   }
 
-  function onFile(file) {
-    if (!file) {
-      return;
-    }
-    var max = cfg.maxImage || 512000;
-    if (file.size > max) {
-      showToast("الصورة أكبر من الحد المسموح (500 كيلوبايت).");
-      return;
-    }
-    if (!/^image\/(jpeg|jpg|png|webp|gif)$/i.test(file.type || "")) {
-      showToast("يُسمح بصور JPEG أو PNG أو WebP أو GIF فقط.");
-      return;
-    }
-    var reader = new FileReader();
-    reader.onload = function () {
-      var url = String(reader.result || "");
-      if (!safeDataUrl(url)) {
-        showToast("تعذر قراءة الصورة.");
-        return;
-      }
-      pendingImage = { dataUrl: url, name: file.name || "صورة" };
-      if (attachThumb) {
-        attachThumb.src = url;
-      }
-      if (attachName) {
-        attachName.textContent = pendingImage.name;
-      }
-      if (attachPreview) {
-        attachPreview.hidden = false;
-        attachPreview.classList.add("is-on");
-      }
-    };
-    reader.onerror = function () {
-      showToast("تعذر قراءة الصورة.");
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function stopMic() {
-    listening = false;
-    if (recognition) {
-      try {
-        recognition.stop();
-      } catch (e) {
-        /* ignore */
-      }
-    }
-    if (micBtn) {
-      micBtn.classList.remove("is-on");
-      micBtn.setAttribute("aria-pressed", "false");
-    }
-  }
-
-  function toggleMic() {
-    if (!SpeechRec || !recognition) {
-      return;
-    }
-    if (listening) {
-      stopMic();
-      return;
-    }
-    try {
-      recognition.lang = "ar-EG";
-      recognition.start();
-      listening = true;
-      if (micBtn) {
-        micBtn.classList.add("is-on");
-        micBtn.setAttribute("aria-pressed", "true");
-      }
-    } catch (e) {
-      try {
-        recognition.lang = "en-US";
-        recognition.start();
-        listening = true;
-      } catch (err) {
-        showToast("تعذر تشغيل الميكروفون في هذا المتصفح.");
-        stopMic();
-      }
-    }
-  }
-
   function bind() {
-    root = qs("#mhaChatRoot");
     panel = qs("#mhaChatPanel");
     logEl = qs("#mhaChatLog");
     form = qs("#mhaChatForm");
     input = qs("#mhaChatInput");
+    sendBtn = qs("#mhaChatSend");
     toastEl = qs("#mhaChatToast");
     agentEl = qs("#mhaChatAgent");
     toggleBtn = qs("#mhaChatToggle");
-    fileInput = qs("#mhaChatFile");
-    attachPreview = qs("#mhaChatAttachPreview");
-    attachThumb = qs("#mhaChatAttachThumb");
-    attachName = qs("#mhaChatAttachName");
-    micBtn = qs("#mhaChatMic");
     var closeBtn = qs("#mhaChatClose");
     var refreshBtn = qs("#mhaChatRefresh");
-    var imageBtn = qs("#mhaChatImage");
-    var attachClear = qs("#mhaChatAttachClear");
 
     if (!panel || !cfg.rest) {
       return;
@@ -518,57 +361,7 @@
       });
     }
 
-    if (imageBtn && fileInput) {
-      imageBtn.addEventListener("click", function () {
-        fileInput.click();
-      });
-      fileInput.addEventListener("change", function () {
-        onFile(fileInput.files && fileInput.files[0]);
-      });
-    }
-    if (attachClear) {
-      attachClear.addEventListener("click", clearAttach);
-    }
-
-    if (micBtn) {
-      if (!SpeechRec) {
-        micBtn.disabled = true;
-        micBtn.title = "الإدخال الصوتي غير مدعوم في هذا المتصفح";
-      } else {
-        try {
-          recognition = new SpeechRec();
-          recognition.lang = "ar-EG";
-          recognition.interimResults = false;
-          recognition.maxAlternatives = 1;
-          recognition.onresult = function (event) {
-            var text = "";
-            if (event.results && event.results[0] && event.results[0][0]) {
-              text = event.results[0][0].transcript || "";
-            }
-            if (input && text) {
-              input.value = (input.value ? input.value + " " : "") + text;
-            }
-            stopMic();
-          };
-          recognition.onerror = function () {
-            stopMic();
-          };
-          recognition.onend = function () {
-            listening = false;
-            if (micBtn) {
-              micBtn.classList.remove("is-on");
-              micBtn.setAttribute("aria-pressed", "false");
-            }
-          };
-          micBtn.addEventListener("click", toggleMic);
-        } catch (e) {
-          micBtn.disabled = true;
-          micBtn.title = "الإدخال الصوتي غير مدعوم في هذا المتصفح";
-        }
-      }
-    }
-
-    document.querySelectorAll("#mhaChatChips [data-chip]").forEach(function (btn) {
+    chipButtons().forEach(function (btn) {
       btn.addEventListener("click", function () {
         var chip = btn.getAttribute("data-chip") || "";
         if (!isOpen()) {

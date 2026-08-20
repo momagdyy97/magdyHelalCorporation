@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MHA_VERSION', '1.5.0');
+define('MHA_VERSION', '1.5.1');
 define('MHA_DIR', get_template_directory());
 define('MHA_URI', get_template_directory_uri());
 

@@ -944,43 +944,6 @@ img {
   border-radius: 12px 12px 12px 4px;
 }
 
-.mha-chat-preview {
-  display: block;
-  max-width: 180px;
-  max-height: 140px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  object-fit: cover;
-}
-
-.mha-chat-speak {
-  position: absolute;
-  top: -10px;
-  inset-inline-start: -10px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: var(--mha-navy);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.mha-chat-speak svg {
-  width: 14px;
-  height: 14px;
-}
-
-.mha-chat-speak:hover,
-.mha-chat-speak:focus {
-  background: var(--mha-gold-soft);
-  outline: 0;
-}
-
 .mha-chat-links {
   list-style: none;
   padding: 8px 0 0;
@@ -1062,37 +1025,15 @@ img {
   outline: 0;
 }
 
+.mha-chat-chips button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .mha-chat-composer {
   border-top: 1px solid #ececec;
   background: #fff;
   flex-shrink: 0;
-}
-
-.mha-chat-attach-preview {
-  display: none;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px 0;
-  font-size: 12px;
-  color: var(--mha-muted);
-}
-
-.mha-chat-attach-preview.is-on {
-  display: flex;
-}
-
-.mha-chat-attach-preview img {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 6px;
-}
-
-.mha-chat-attach-clear {
-  border: 0;
-  background: transparent;
-  color: var(--mha-navy);
-  font-weight: 700;
 }
 
 .mha-chat-form {
@@ -1117,37 +1058,6 @@ img {
   color: #9aa3ab;
 }
 
-.mha-chat-tool {
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #6b7280;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.mha-chat-tool svg {
-  width: 20px;
-  height: 20px;
-}
-
-.mha-chat-tool:hover,
-.mha-chat-tool:focus {
-  background: var(--mha-bg);
-  color: var(--mha-navy);
-  outline: 0;
-}
-
-.mha-chat-tool:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
 .mha-chat-send {
   width: 40px;
   min-width: 40px;
@@ -1156,6 +1066,15 @@ img {
   border-radius: 10px;
   background: var(--mha-navy);
   color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.mha-chat-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .mha-chat-send svg {

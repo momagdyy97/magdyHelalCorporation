@@ -85,7 +85,6 @@ function mha_enqueue()
         'name'     => 'مستشار M.H CORP',
         'welcome'  => 'أهلاً بكم في مستشار مكتب مجدي هلال — M.H CORP. يمكن السؤال عن الضرائب، المراجعة، الفاتورة الإلكترونية، أو خدمات المكتب.',
         'maxLen'   => 1000,
-        'maxImage' => 512000,
     ]);
 }
 add_action('wp_enqueue_scripts', 'mha_enqueue');
