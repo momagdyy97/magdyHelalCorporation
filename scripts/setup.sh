@@ -26,7 +26,7 @@ fi
 if ! wp core is-installed; then
   wp core install \
     --url="${WP_URL}" \
-    --title="مكتب مجدي هلال — M.H CORP" \
+    --title="مكتب مجدي هلال — HELAL CORP" \
     --admin_user="${WP_ADMIN_USER}" \
     --admin_password="${WP_ADMIN_PASSWORD}" \
     --admin_email="${WP_ADMIN_EMAIL}" \
@@ -35,12 +35,16 @@ fi
 
 wp option update home "${WP_URL}" || true
 wp option update siteurl "${WP_URL}" || true
+wp search-replace 'https://magdyhelal.modevops.fun' "${WP_URL}" --all-tables --skip-columns=guid || true
+wp search-replace 'http://magdyhelal.modevops.fun' "${WP_URL}" --all-tables --skip-columns=guid || true
+wp search-replace 'https://magdy.modevops.fun' "${WP_URL}" --all-tables --skip-columns=guid || true
+wp search-replace 'http://magdy.modevops.fun' "${WP_URL}" --all-tables --skip-columns=guid || true
 
 wp language core install ar || true
 wp site switch-language ar || true
 wp rewrite structure '/%postname%/' --hard
-wp option update blogname "مكتب مجدي هلال — M.H CORP"
-wp option update blogdescription "magdyhelalCORP — محاسبة · ضرائب · مراجعة"
+wp option update blogname "مكتب مجدي هلال — HELAL CORP"
+wp option update blogdescription "HELAL CORP — محاسبة · ضرائب · مراجعة"
 wp option update admin_email "${WP_ADMIN_EMAIL}" || true
 wp option delete new_admin_email || true
 wp user update "${WP_ADMIN_USER}" --user_email="${WP_ADMIN_EMAIL}" --skip-email || true
@@ -69,7 +73,7 @@ wp redis enable || true
 wp rewrite flush --hard
 
 echo
-echo "M.H CORP is ready."
+echo "HELAL CORP is ready."
 echo "Site:  ${WP_URL}"
 echo "Admin: ${WP_URL}/wp-admin"
 echo "User:  ${WP_ADMIN_USER}"

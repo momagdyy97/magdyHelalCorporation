@@ -32,6 +32,74 @@ function mha_page_url($slug)
     return $page ? get_permalink($page) : home_url('/' . $slug . '/');
 }
 
+function mha_legacy_public_hosts()
+{
+    return [
+        'magdyhelal.modevops.fun',
+        'www.magdyhelal.modevops.fun',
+        'magdy.modevops.fun',
+        'www.magdy.modevops.fun',
+        'magdyhelalcorp.infinityfree.io',
+        'www.magdyhelalcorp.infinityfree.io',
+        'www.helal.co',
+    ];
+}
+
+function mha_is_legacy_host($host)
+{
+    $host = strtolower((string) $host);
+    $host = preg_replace('/:\d+$/', '', $host);
+    return in_array($host, mha_legacy_public_hosts(), true);
+}
+
+function mha_canonical_origin()
+{
+    return 'https://helal.co';
+}
+
+function mha_rewrite_legacy_url($url)
+{
+    $url = trim((string) $url);
+    if ($url === '') {
+        return $url;
+    }
+    $parts = wp_parse_url($url);
+    if (!is_array($parts) || empty($parts['host'])) {
+        return $url;
+    }
+    if (!mha_is_legacy_host($parts['host'])) {
+        return $url;
+    }
+    $path = isset($parts['path']) ? $parts['path'] : '/';
+    if ($path === '' || $path === '/') {
+        return mha_canonical_origin() . '/';
+    }
+    $query = isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '';
+    $frag  = isset($parts['fragment']) && $parts['fragment'] !== '' ? '#' . $parts['fragment'] : '';
+    return mha_canonical_origin() . '/' . ltrim($path, '/') . $query . $frag;
+}
+
+function mha_filter_legacy_home_url($url)
+{
+    return mha_rewrite_legacy_url($url);
+}
+add_filter('home_url', 'mha_filter_legacy_home_url', 1);
+add_filter('site_url', 'mha_filter_legacy_home_url', 1);
+
+function mha_filter_legacy_menu_urls($items)
+{
+    if (!is_array($items)) {
+        return $items;
+    }
+    foreach ($items as $item) {
+        if (isset($item->url)) {
+            $item->url = mha_rewrite_legacy_url($item->url);
+        }
+    }
+    return $items;
+}
+add_filter('wp_nav_menu_objects', 'mha_filter_legacy_menu_urls', 1);
+
 function mha_is_retired_phone($raw)
 {
     $digits = preg_replace('/\D+/', '', (string) $raw);
@@ -213,7 +281,7 @@ function mha_whatsapp_link()
     if ($digits === '') {
         return '';
     }
-    $text = rawurlencode('السلام عليكم، أرغب في الاستفسار عن خدمات مكتب مجدي هلال — M.H CORP.');
+    $text = rawurlencode('السلام عليكم، أرغب في الاستفسار عن خدمات مكتب مجدي هلال — HELAL CORP.');
     return 'https://wa.me/' . $digits . '?text=' . $text;
 }
 
@@ -221,7 +289,7 @@ function mha_defaults()
 {
     return [
         'firm'        => 'مكتب مجدي هلال',
-        'firm_en'     => 'M.H CORP',
+        'firm_en'     => 'HELAL CORP',
         'tagline'     => 'المحاسبة · الضرائب · المراجعة',
         'hours'       => 'السبت — الخميس · 9:00 ص — 5:00 م',
         'phone'       => '+0224051171',
@@ -230,11 +298,11 @@ function mha_defaults()
         'whatsapp'    => '',
         'email'       => 'info@helal.co',
         'address'     => 'مدينة نصر، القاهرة',
-        'hero_kicker' => 'M.H CORP',
+        'hero_kicker' => 'HELAL CORP',
         'hero_title'  => 'خبرة محاسبية تقود قرارات أوضح',
         'hero_text'   => 'مكتب مهني في مدينة نصر يخدم الشركات في المحاسبة والضرائب والمراجعة، بقيادة المحاسب القانوني والمستشار الضريبي مجدي هلال وفريق يضم نحو 20 إلى 30 محاسباً.',
         'hero_cta'    => 'اطلب استشارة',
-        'about_lead'  => 'مكتب مجدي هلال للمحاسبة والمراجعة (M.H CORP — magdyhelalCORP) مكتب مهني في مدينة نصر بالقاهرة. يقوده المحاسب القانوني والمستشار الضريبي مجدي هلال، ويعمل فيه فريق يضم نحو 20 إلى 30 محاسباً يرافقون الشركات في الدورة المحاسبية والالتزام الضريبي والمراجعة.',
+        'about_lead'  => 'مكتب مجدي هلال للمحاسبة والمراجعة — HELAL CORP مكتب مهني في مدينة نصر بالقاهرة. يقوده المحاسب القانوني والمستشار الضريبي مجدي هلال، ويعمل فيه فريق يضم نحو 20 إلى 30 محاسباً يرافقون الشركات في الدورة المحاسبية والالتزام الضريبي والمراجعة.',
         'stat_years'  => '25',
         'stat_clients'=> '180',
         'stat_team'   => '25',

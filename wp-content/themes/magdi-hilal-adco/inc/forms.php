@@ -40,7 +40,7 @@ function mha_handle_contact()
     if ($post_id && !is_wp_error($post_id)) {
         update_post_meta($post_id, 'mha_email', $email);
         $to = mha_public_email();
-        wp_mail($to, 'رسالة جديدة من موقع مكتب مجدي هلال — M.H CORP: ' . $name, $message . "\n\n" . $email);
+        wp_mail($to, 'رسالة جديدة من موقع مكتب مجدي هلال — HELAL CORP: ' . $name, $message . "\n\n" . $email);
     }
 
     wp_safe_redirect(add_query_arg('contact', 'ok', wp_get_referer() ?: home_url('/')));

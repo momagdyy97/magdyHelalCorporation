@@ -198,7 +198,7 @@ function mha_news_format_body(array $item)
 {
     $source = esc_html($item['source']);
     $when   = esc_html($item['source_date']);
-    $note   = 'هذا النص ملخص مهني أصلي أعدّه مكتب مجدي هلال — M.H CORP استناداً إلى أطر عامة معلنة. ليس نسخاً حرفياً من جهة رسمية، ولا يغني عن مراجعة الملف داخل المكتب.';
+    $note   = 'هذا النص ملخص مهني أصلي أعدّه مكتب مجدي هلال — HELAL CORP استناداً إلى أطر عامة معلنة. ليس نسخاً حرفياً من جهة رسمية، ولا يغني عن مراجعة الملف داخل المكتب.';
 
     return wpautop($item['content']) . "\n<p class=\"mha-news-source\"><strong>المصدر:</strong> {$source} — {$when}.</p>\n<p class=\"mha-news-disclaimer\">{$note}</p>";
 }
@@ -363,7 +363,7 @@ TXT,
             'slug'         => 'al-fahs-al-daribi-wal-mustanadat',
             'date'         => '2026-03-20 09:00:00',
             'image'        => 'topic-exam',
-            'outlet'       => 'M.H CORP',
+            'outlet'       => 'HELAL CORP',
             'origin'       => '',
             'source'       => 'ممارسة مهنية — الفحص الضريبي والمستندات (ملخص مكتبي)',
             'source_date'  => 'مارس 2026',
@@ -382,7 +382,7 @@ TXT,
             'slug'         => 'imsak-al-dafatir-wal-qawaem-al-maliya',
             'date'         => '2026-02-15 09:00:00',
             'image'        => 'topic-books',
-            'outlet'       => 'M.H CORP',
+            'outlet'       => 'HELAL CORP',
             'origin'       => '',
             'source'       => 'ممارسة مهنية — إمساك الدفاتر والقوائم المالية (ملخص مكتبي)',
             'source_date'  => 'فبراير 2026',
@@ -562,7 +562,7 @@ function mha_fetch_rss_items($url)
             CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_TIMEOUT        => 8,
             CURLOPT_HTTP_VERSION   => defined('CURL_HTTP_VERSION_2TLS') ? CURL_HTTP_VERSION_2TLS : CURL_HTTP_VERSION_1_1,
-            CURLOPT_USERAGENT      => 'Mozilla/5.0 (compatible; M.H CORP NewsSeed/1.5)',
+            CURLOPT_USERAGENT      => 'Mozilla/5.0 (compatible; HELAL CORP NewsSeed/1.5)',
             CURLOPT_HTTPHEADER     => ['Accept: application/rss+xml, application/xml, text/xml, */*'],
             CURLOPT_SSL_VERIFYPEER => true,
         ]);
@@ -796,7 +796,7 @@ function mha_news_outlet_name($post)
             return trim($parts[0]);
         }
     }
-    return 'M.H CORP';
+    return 'HELAL CORP';
 }
 
 function mha_news_favicon_url($post)

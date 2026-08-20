@@ -95,15 +95,33 @@ On port 80 you can also `return 301 https://helal.co$request_uri;` for both name
 
 ### 5. After git pull (existing VPS)
 
+**Home will keep opening `magdyhelal.modevops.fun` (NXDOMAIN) unless `.env` and the database both use `https://helal.co`.** The theme rewrites leftover menu URLs on load, but constants from Docker (`WP_HOME` / `WP_SITEURL`) win over the database. After `git pull`:
+
+1. Open `/opt/magdyHelalCorporation/.env` and set:
+   ```
+   WP_HOME=https://helal.co
+   WP_SITEURL=https://helal.co
+   WP_URL=https://helal.co
+   ```
+   Do **not** leave `magdyhelal.modevops.fun`, `magdy.modevops.fun`, or `localhost:8088` as the public WordPress URL.
+2. Recreate the WordPress container so `WORDPRESS_CONFIG_EXTRA` picks up the new values.
+3. Search-replace the old host in MySQL, then flush permalinks.
+
 ```bash
 cd /opt/magdyHelalCorporation
 git pull
-docker compose -f docker-compose.server.yml up -d --build
+# Confirm .env WP_HOME / WP_SITEURL / WP_URL = https://helal.co  (no trailing slash)
+docker compose -f docker-compose.server.yml up -d --build --force-recreate
+docker compose -f docker-compose.server.yml --profile tools run --rm wpcli wp option update home 'https://helal.co'
+docker compose -f docker-compose.server.yml --profile tools run --rm wpcli wp option update siteurl 'https://helal.co'
+docker compose -f docker-compose.server.yml --profile tools run --rm wpcli wp search-replace 'https://magdyhelal.modevops.fun' 'https://helal.co' --all-tables --skip-columns=guid
+docker compose -f docker-compose.server.yml --profile tools run --rm wpcli wp search-replace 'http://magdyhelal.modevops.fun' 'https://helal.co' --all-tables --skip-columns=guid
+docker compose -f docker-compose.server.yml --profile tools run --rm wpcli wp rewrite flush --hard
 docker compose -f docker-compose.server.yml --profile tools run --rm --entrypoint sh wpcli /scripts/setup.sh
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-Confirm **Settings → General** (or `wp option get home`) is `https://helal.co` with no trailing slash.
+Confirm **Settings → General** (or `wp option get home`) is `https://helal.co` with no trailing slash. **الرئيسية** and the logo must be `https://helal.co/` (or `/`), never `magdyhelal.modevops.fun`.
 
 ### 6. MySQL backup (1st and 16th at 00:00 Cairo)
 
@@ -183,7 +201,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 ## Chat
 
-Knowledge rows do not hardcode `localhost`. Page buttons use `home_url()`, so they follow **Settings → General** (`helal.co`). Replies still strip leftover `localhost` / `127.0.0.1` / old hosts (`magdyhelal.modevops.fun`, `magdy.modevops.fun`, `magdyhelalcorp.infinityfree.io`) and rewrite `www.helal.co` toward the apex. After a URL change, reload the site once (theme load re-seeds if the chat DB version bumped) or run:
+Knowledge rows do not hardcode `localhost`. Page buttons use `home_url()`, so they follow **Settings → General** (`helal.co`). Replies rewrite leftover public hosts (`magdyhelal.modevops.fun`, `magdy.modevops.fun`, `magdyhelalcorp.infinityfree.io`, `www.helal.co`) to `home_url()` / `https://helal.co`, and strip `localhost` / `127.0.0.1`. After a URL change, reload the site once (theme load re-seeds if the chat DB version bumped) or run:
 
 ```bash
 docker compose -f docker-compose.server.yml --profile tools run --rm --entrypoint sh wpcli /scripts/setup.sh

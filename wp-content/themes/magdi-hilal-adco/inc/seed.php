@@ -11,9 +11,11 @@ if (!defined('ABSPATH')) {
 
 function mha_maybe_seed()
 {
-    if ((int) get_option('mha_brand_version') < 6) {
+    if ((int) get_option('mha_brand_version') < 7) {
         mha_apply_branding(true);
     }
+
+    mha_repair_legacy_urls();
 
     if (!is_admin() && php_sapi_name() !== 'cli') {
         return;
@@ -25,6 +27,8 @@ function mha_maybe_seed()
     }
 }
 add_action('init', 'mha_maybe_seed', 30);
+add_action('after_setup_theme', 'mha_repair_legacy_urls', 30);
+add_action('admin_init', 'mha_repair_legacy_urls', 5);
 add_action('after_switch_theme', 'mha_seed_content');
 
 function mha_seed_content()
@@ -163,7 +167,7 @@ function mha_create_demo_content()
     if (!$menu) {
         $menu_id = wp_create_nav_menu($menu_name);
         $map = [
-            ['الرئيسية', home_url('/')],
+            ['الرئيسية', ($home_id ? (int) $home_id : home_url('/'))],
             ['من نحن', $ids['about'] ?? 0],
             ['خدماتنا', $ids['services'] ?? 0],
             ['فريق العمل', $ids['team'] ?? 0],
@@ -219,12 +223,58 @@ function mha_apply_branding($force = true)
         set_theme_mod($key, $value);
     }
 
-    update_option('blogname', 'مكتب مجدي هلال — M.H CORP');
-    update_option('blogdescription', 'magdyhelalCORP — محاسبة · ضرائب · مراجعة');
+    update_option('blogname', 'مكتب مجدي هلال — HELAL CORP');
+    update_option('blogdescription', 'HELAL CORP — محاسبة · ضرائب · مراجعة');
 
     mha_purge_ibrahim();
     mha_ensure_custom_logo(true);
-    update_option('mha_brand_version', 6);
+    update_option('mha_brand_version', 7);
+}
+
+function mha_repair_legacy_urls()
+{
+    if ((int) get_option('mha_legacy_url_repair') >= 1) {
+        return;
+    }
+
+    foreach (['home', 'siteurl'] as $key) {
+        $val  = (string) get_option($key);
+        $host = strtolower((string) wp_parse_url($val, PHP_URL_HOST));
+        if (mha_is_legacy_host($host) || $host === '') {
+            update_option($key, mha_canonical_origin());
+        }
+    }
+
+    $items = get_posts([
+        'post_type'      => 'nav_menu_item',
+        'posts_per_page' => -1,
+        'post_status'    => 'any',
+    ]);
+    $front = (int) get_option('page_on_front');
+    foreach ($items as $item) {
+        $type = get_post_meta($item->ID, '_menu_item_type', true);
+        if ($type !== 'custom') {
+            continue;
+        }
+        $url = (string) get_post_meta($item->ID, '_menu_item_url', true);
+        $is_home_title = ($item->post_title === 'الرئيسية');
+        $parts = wp_parse_url($url);
+        $path  = is_array($parts) && isset($parts['path']) ? $parts['path'] : '';
+        $is_exact_old_home = is_array($parts) && !empty($parts['host']) && mha_is_legacy_host($parts['host']) && ($path === '' || $path === '/');
+        if ($front && ($is_home_title || $is_exact_old_home)) {
+            update_post_meta($item->ID, '_menu_item_type', 'post_type');
+            update_post_meta($item->ID, '_menu_item_object', 'page');
+            update_post_meta($item->ID, '_menu_item_object_id', (string) $front);
+            update_post_meta($item->ID, '_menu_item_url', '');
+            continue;
+        }
+        $new = mha_rewrite_legacy_url($url);
+        if ($new !== $url) {
+            update_post_meta($item->ID, '_menu_item_url', $new);
+        }
+    }
+
+    update_option('mha_legacy_url_repair', 1);
 }
 
 function mha_strip_ibrahim_text($text)

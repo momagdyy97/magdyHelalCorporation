@@ -66,7 +66,7 @@ $label_id = $uid . 'Label';
                             <div class="mha-news-card">
                                 <div class="mha-news-source-row">
                                     <img class="mha-news-favicon" src="<?php echo esc_url(mha_img('logo-mark.png')); ?>" alt="" width="18" height="18">
-                                    <span class="mha-news-outlet"><?php echo esc_html($item['outlet'] ?? 'M.H CORP'); ?></span>
+                                    <span class="mha-news-outlet"><?php echo esc_html($item['outlet'] ?? 'HELAL CORP'); ?></span>
                                 </div>
                                 <div class="mha-news-main">
                                     <div class="mha-news-copy">

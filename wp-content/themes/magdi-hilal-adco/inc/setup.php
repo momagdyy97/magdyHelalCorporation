@@ -97,10 +97,11 @@ class MHA_Walker_Nav extends Walker_Nav_Menu
             $li = 'nav-item' . ($has_children ? ' dropdown' : '') . ($active ? ' active' : '');
             $link = 'nav-link' . ($has_children ? ' dropdown-toggle' : '');
             $extra = $has_children ? ' data-toggle="dropdown" aria-haspopup="true"' : '';
+            $href = mha_rewrite_legacy_url($item->url);
             $output .= '<li class="' . esc_attr($li) . '">';
-            $output .= '<a class="' . esc_attr($link) . '" href="' . esc_url($item->url) . '"' . $extra . '>' . esc_html($item->title) . '</a>';
+            $output .= '<a class="' . esc_attr($link) . '" href="' . esc_url($href) . '"' . $extra . '>' . esc_html($item->title) . '</a>';
         } else {
-            $output .= '<li><a class="dropdown-item" href="' . esc_url($item->url) . '">' . esc_html($item->title) . '</a>';
+            $output .= '<li><a class="dropdown-item" href="' . esc_url(mha_rewrite_legacy_url($item->url)) . '">' . esc_html($item->title) . '</a>';
         }
     }
 }

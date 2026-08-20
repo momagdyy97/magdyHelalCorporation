@@ -1,6 +1,6 @@
 <?php
 /**
- * M.H CORP consultation chatbot — MySQL persistence, retrieval router, REST API.
+ * HELAL CORP consultation chatbot — MySQL persistence, retrieval router, REST API.
  *
  * Works fully offline. Optional OpenAI only if MHA_OPENAI_API_KEY / OPENAI_API_KEY is set.
  *
@@ -15,7 +15,7 @@ if (function_exists('mb_internal_encoding')) {
     mb_internal_encoding('UTF-8');
 }
 
-define('MHA_CHAT_DB_VERSION', 6);
+define('MHA_CHAT_DB_VERSION', 8);
 define('MHA_CHAT_MAX_LEN', 1000);
 define('MHA_CHAT_RATE', 20);
 
@@ -123,27 +123,32 @@ function mha_chat_purge_dev_hosts_from_knowledge()
     global $wpdb;
     $table  = mha_chat_table('knowledge');
     $fields = ['body', 'source', 'title', 'tags'];
-    $froms  = [
-        'http://localhost:8088',
-        'https://localhost:8088',
-        'http://127.0.0.1:8088',
-        'https://127.0.0.1:8088',
-        'http://localhost',
-        'https://localhost',
-        'http://magdy.modevops.fun',
-        'https://magdy.modevops.fun',
-        'http://magdyhelal.modevops.fun',
-        'https://magdyhelal.modevops.fun',
-        'http://www.helal.co',
-        'https://www.helal.co',
-        'http://magdyhelalcorp.infinityfree.io',
-        'https://magdyhelalcorp.infinityfree.io',
-        'localhost:8088',
-        '127.0.0.1:8088',
-        'magdy.modevops.fun',
-        'magdyhelal.modevops.fun',
-        'www.helal.co',
-        'magdyhelalcorp.infinityfree.io',
+    $home   = untrailingslashit(home_url('/'));
+    $rewrites = [
+        'http://localhost:8088'                    => $home,
+        'https://localhost:8088'                   => $home,
+        'http://127.0.0.1:8088'                    => $home,
+        'https://127.0.0.1:8088'                   => $home,
+        'http://localhost'                         => $home,
+        'https://localhost'                        => $home,
+        'http://magdy.modevops.fun'                 => $home,
+        'https://magdy.modevops.fun'                => $home,
+        'http://magdyhelal.modevops.fun'            => $home,
+        'https://magdyhelal.modevops.fun'           => $home,
+        'http://www.helal.co'                       => $home,
+        'https://www.helal.co'                      => $home,
+        'http://magdyhelalcorp.infinityfree.io'     => $home,
+        'https://magdyhelalcorp.infinityfree.io'    => $home,
+    ];
+    $bare = [
+        'localhost:8088'                 => wp_parse_url($home, PHP_URL_HOST),
+        '127.0.0.1:8088'                 => wp_parse_url($home, PHP_URL_HOST),
+        'magdy.modevops.fun'              => wp_parse_url($home, PHP_URL_HOST),
+        'magdyhelal.modevops.fun'         => wp_parse_url($home, PHP_URL_HOST),
+        'www.helal.co'                    => wp_parse_url($home, PHP_URL_HOST),
+        'magdyhelalcorp.infinityfree.io'  => wp_parse_url($home, PHP_URL_HOST),
+    ];
+    $erase = [
         '+201000354045',
         '201000354045',
         '01000354045',
@@ -151,7 +156,21 @@ function mha_chat_purge_dev_hosts_from_knowledge()
         'momagdyy97@gmail.com',
     ];
     foreach ($fields as $field) {
-        foreach ($froms as $from) {
+        foreach ($rewrites as $from => $to) {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$table} SET {$field} = REPLACE({$field}, %s, %s)",
+                $from,
+                $to
+            ));
+        }
+        foreach ($bare as $from => $to) {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$table} SET {$field} = REPLACE({$field}, %s, %s)",
+                $from,
+                (string) $to
+            ));
+        }
+        foreach ($erase as $from) {
             $wpdb->query($wpdb->prepare(
                 "UPDATE {$table} SET {$field} = REPLACE({$field}, %s, '')",
                 $from
@@ -167,10 +186,10 @@ function mha_chat_knowledge_corpus()
     return [
         [
             'slug'   => 'site-map',
-            'title'  => 'خريطة موقع مكتب مجدي هلال — M.H CORP',
+            'title'  => 'خريطة موقع مكتب مجدي هلال — HELAL CORP',
             'tags'   => 'موقع صفحات خدمات تواصل عن فريق عملاء مشاريع أخبار استشارة quote about /about/ services /services/ team /team/ clients /clients/ projects /projects/ news /news/ contact /contact/ home',
-            'source' => 'موقع M.H CORP',
-            'body'   => 'مكتب مجدي هلال للمحاسبة والمراجعة (M.H CORP) في مدينة نصر، القاهرة. المدير: المحاسب القانوني والمستشار الضريبي مجدي هلال، مع فريق نحو 20 إلى 30 محاسباً. '
+            'source' => 'موقع HELAL CORP',
+            'body'   => 'مكتب مجدي هلال للمحاسبة والمراجعة (HELAL CORP) في مدينة نصر، القاهرة. المدير: المحاسب القانوني والمستشار الضريبي مجدي هلال، مع فريق نحو 20 إلى 30 محاسباً. '
                 . 'صفحات الموقع: الرئيسية، من نحن، خدماتنا (ضرائب ومراجعة وأنظمة محاسبية واستشارات)، فريق العمل، عملاؤنا، مشاريعنا، الأخبار، وتواصل معنا. '
                 . 'الهاتف: {{phone}} — البريد: {{email}} — العنوان: {{address}} — العمل: {{hours}}.'
                 . $disclaimer,
@@ -179,8 +198,8 @@ function mha_chat_knowledge_corpus()
             'slug'   => 'contact-hours',
             'title'  => 'بيانات التواصل وساعات العمل',
             'tags'   => 'تواصل هاتف بريد عنوان ساعات contact phone email address hours quote موعد اتصال /contact/',
-            'source' => 'موقع M.H CORP',
-            'body'   => 'للتواصل مع مكتب مجدي هلال — M.H CORP: الهاتف {{phone}} (يُكتب من اليسار لليمين)، البريد {{email}}، العنوان {{address}}. ساعات العمل {{hours}}. يمكن طلب استشارة من صفحة «تواصل معنا». لا يوجد واتساب على أرقام المكتب الأرضية، ولا يوجد حساب فيسبوك للمكتب على هذا الموقع.',
+            'source' => 'موقع HELAL CORP',
+            'body'   => 'للتواصل مع مكتب مجدي هلال — HELAL CORP: الهاتف {{phone}} (يُكتب من اليسار لليمين)، البريد {{email}}، العنوان {{address}}. ساعات العمل {{hours}}. يمكن طلب استشارة من صفحة «تواصل معنا». لا يوجد واتساب على أرقام المكتب الأرضية، ولا يوجد حساب فيسبوك للمكتب على هذا الموقع.',
         ],
         [
             'slug'   => 'income-tax-91-2005',
@@ -256,28 +275,28 @@ function mha_chat_knowledge_corpus()
             'slug'   => 'services-tax',
             'title'  => 'خدمة الأعمال الضريبية في المكتب',
             'tags'   => 'خدمة ضرائب إقرارات فحص قيمة مضافة فاتورة',
-            'source' => 'موقع M.H CORP',
+            'source' => 'موقع HELAL CORP',
             'body'   => 'قسم الضرائب في مكتب مجدي هلال يتابع الإقرارات والفحص والقيمة المضافة والمنظومات الإلكترونية بما يناسب حجم الشركة. التفاصيل في صفحة خدماتنا، وللتواصل من صفحة تواصل معنا.',
         ],
         [
             'slug'   => 'services-audit',
             'title'  => 'خدمة المراجعة والتدقيق في المكتب',
             'tags'   => 'خدمة مراجعة تدقيق رقابة قوائم',
-            'source' => 'موقع M.H CORP',
+            'source' => 'موقع HELAL CORP',
             'body'   => 'المراجعة في المكتب تركز على المخاطر والضوابط لا على الشكل فقط: تخطيط، تقييم رقابة داخلية، وتقارير للإدارة. التفاصيل في صفحة خدماتنا، ومشاريع مماثلة في صفحة مشاريعنا.',
         ],
         [
             'slug'   => 'services-accounting',
             'title'  => 'خدمة الأنظمة المحاسبية في المكتب',
             'tags'   => 'خدمة محاسبة دفاتر تقارير شهرية أنظمة',
-            'source' => 'موقع M.H CORP',
+            'source' => 'موقع HELAL CORP',
             'body'   => 'الأنظمة المحاسبية تشمل إمساك الدفاتر والدورة المستندية والتقارير الشهرية التي تساعد الإدارة على قراءة المركز المالي. التفاصيل في صفحة خدماتنا.',
         ],
         [
             'slug'   => 'about-firm',
             'title'  => 'عن مكتب مجدي هلال',
             'tags'   => 'من نحن مكتب مجدي هلال فريق مدينة نصر about firm team',
-            'source' => 'موقع M.H CORP',
+            'source' => 'موقع HELAL CORP',
             'body'   => 'مكتب مهني للمحاسبة والمراجعة والاستشارات الضريبية في {{address}}. يقوده مجدي هلال، ويعمل فيه فريق يضم نحو 20 إلى 30 محاسباً. نبذة أوفى في صفحة من نحن، والفريق في صفحة فريق العمل، والعملاء في صفحة عملاؤنا.',
         ],
     ];
@@ -369,12 +388,11 @@ function mha_chat_scrub_reply($text)
 {
     $text = mha_chat_expand_facts($text);
     $text = mha_chat_rewrite_dev_hosts($text);
-    $old_hosts = 'localhost|127\.0\.0\.1|www\.helal\.co|magdyhelal\.modevops\.fun|magdy\.modevops\.fun|magdyhelalcorp\.infinityfree\.io';
+    $old_hosts = 'localhost|127\.0\.0\.1';
     $text = preg_replace('#\[([^\]]+)\]\(\s*https?://(?:' . $old_hosts . ')(?::\d+)?[^)]*\)#i', '$1', $text);
     $text = preg_replace('#https?://(?:' . $old_hosts . ')(?::\d+)?#i', '', $text);
     $text = preg_replace('#\b(?:localhost|127\.0\.0\.1):\d+\b#i', '', $text);
     $text = preg_replace('#\b(?:localhost|127\.0\.0\.1)\b#i', '', $text);
-    $text = preg_replace('#\b(?:www\.helal\.co|magdyhelal\.modevops\.fun|magdy\.modevops\.fun|magdyhelalcorp\.infinityfree\.io)\b#i', '', $text);
     $text = preg_replace('/:8088\b/', '', $text);
     $text = str_ireplace(['magdy.hilal@co', 'momagdyy97@gmail.com'], mha_public_email(), $text);
     $text = str_replace(['+201000354045', '201000354045', '01000354045', '0100 035 045'], '', $text);
@@ -659,7 +677,7 @@ function mha_chat_english_line($agent)
             return 'This is economic literacy, not investment advice.';
         default:
             return sprintf(
-                'You can reach M.H CORP on %s or %s — Nasr City, Cairo.',
+                'You can reach HELAL CORP on %s or %s — Nasr City, Cairo.',
                 mha_phones_display(' and '),
                 mha_public_email()
             );
@@ -684,7 +702,7 @@ function mha_chat_compose($agent, $message, array $chunks, $lang)
     $parts = [];
 
     if (mha_chat_is_greeting($message)) {
-        $parts[] = 'أهلاً بكم في مستشار مكتب مجدي هلال — M.H CORP. يمكن السؤال عن الضرائب، المراجعة، الفاتورة الإلكترونية، أو خدمات المكتب.';
+        $parts[] = 'أهلاً بكم في مستشار مكتب مجدي هلال — HELAL CORP. يمكن السؤال عن الضرائب، المراجعة، الفاتورة الإلكترونية، أو خدمات المكتب.';
         $parts[] = sprintf(
             'للتواصل المباشر: %s — %s — %s. ساعات العمل: %s.',
             mha_phones_display(' و '),
@@ -699,7 +717,7 @@ function mha_chat_compose($agent, $message, array $chunks, $lang)
     }
 
     if (mha_chat_is_contact_query($message)) {
-        $parts[] = 'يسعد مكتب مجدي هلال — M.H CORP استقبال استفساركم.';
+        $parts[] = 'يسعد مكتب مجدي هلال — HELAL CORP استقبال استفساركم.';
         $parts[] = sprintf(
             'الهاتف: %s — البريد: %s — العنوان: %s. ساعات العمل: %s. يمكنكم الكتابة من صفحة «تواصل معنا».',
             mha_phones_display(' و '),
@@ -715,7 +733,7 @@ function mha_chat_compose($agent, $message, array $chunks, $lang)
     }
 
     $intros = [
-        'guide'      => 'يسعد مكتب مجدي هلال — M.H CORP توجيهكم إلى الخدمة أو الصفحة المناسبة.',
+        'guide'      => 'يسعد مكتب مجدي هلال — HELAL CORP توجيهكم إلى الخدمة أو الصفحة المناسبة.',
         'tax'        => 'بخصوص الاستفسار الضريبي، نقدّم إطاراً عاماً من الأنظمة المصرية، دون أن يُعد ذلك رأياً ملزماً لملف معيّن.',
         'audit'      => 'من زاوية المراجعة والرقابة، هذا تمييز مهني عام بين أعمال المكتب والفحص الحكومي.',
         'accounting' => 'من زاوية المحاسبة وإمساك الدفاتر، هذا ترتيب عملي تعتمد عليه التقارير والضرائب لاحقاً.',
@@ -792,7 +810,7 @@ function mha_chat_openai_reply($message, array $chunks, $agent, $lang)
     }
 
     $system = sprintf(
-        'أنت مستشار مهني لمكتب مجدي هلال — M.H CORP في مدينة نصر، القاهرة. أجب بالعربية الفصحى المهنية أساساً. إذا كان سؤال المستخدم بالإنجليزية أضف سطراً إنجليزياً قصيراً في النهاية. لا تختلق مواد قانونية. اعتمد فقط على السياق المعطى وبيانات المكتب. أوضح أن الكلام معلومات عامة وليست استشارة قانونية مرخّصة. لا تذكر فيسبوك ولا إبراهيم هلال. لا تدرج روابط URL في نص الرد ولا تذكر localhost أو 127.0.0.1 أو أرقام المنافذ. الموقع العام helal.co؛ الأزرار تُبنى من عنوان الموقع. اذكر أسماء الصفحات بالعربية فقط (من نحن، خدماتنا، تواصل معنا)؛ الأزرار تظهر منفصلة. بيانات التواصل: الهاتف %s — البريد %s — العنوان %s. لا تذكر واتساب ولا بريداً شخصياً على Gmail.',
+        'أنت مستشار مهني لمكتب مجدي هلال — HELAL CORP في مدينة نصر، القاهرة. أجب بالعربية الفصحى المهنية أساساً. إذا كان سؤال المستخدم بالإنجليزية أضف سطراً إنجليزياً قصيراً في النهاية. لا تختلق مواد قانونية. اعتمد فقط على السياق المعطى وبيانات المكتب. أوضح أن الكلام معلومات عامة وليست استشارة قانونية مرخّصة. لا تذكر فيسبوك ولا إبراهيم هلال. لا تدرج روابط URL في نص الرد ولا تذكر localhost أو 127.0.0.1 أو أرقام المنافذ. الموقع العام helal.co؛ الأزرار تُبنى من عنوان الموقع. اذكر أسماء الصفحات بالعربية فقط (من نحن، خدماتنا، تواصل معنا)؛ الأزرار تظهر منفصلة. بيانات التواصل: الهاتف %s — البريد %s — العنوان %s. لا تذكر واتساب ولا بريداً شخصياً على Gmail.',
         mha_phones_display(' و '),
         mha_public_email(),
         mha_mod('mha_address', mha_defaults()['address'])
@@ -1115,7 +1133,7 @@ function mha_chat_render_widget()
                 <div class="mha-chat-head-identity">
                     <img class="mha-chat-head-avatar" src="<?php echo esc_url($avatar); ?>" alt="" width="36" height="36">
                     <div class="mha-chat-head-copy">
-                        <h2 id="mhaChatTitle">مستشار M.H CORP</h2>
+                        <h2 id="mhaChatTitle">مستشار HELAL CORP</h2>
                         <p class="mha-chat-agent" id="mhaChatAgent"><?php echo esc_html($labels['guide']); ?></p>
                     </div>
                 </div>

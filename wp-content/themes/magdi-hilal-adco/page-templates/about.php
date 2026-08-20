@@ -9,7 +9,7 @@ get_header();
 ?>
 <section class="mha-page-head">
     <div class="container">
-        <p class="mha-kicker">M.H CORP</p>
+        <p class="mha-kicker">HELAL CORP</p>
         <h1>من نحن</h1>
         <p>مكتب محاسبة ومراجعة في مدينة نصر — مكتب مجدي هلال.</p>
     </div>

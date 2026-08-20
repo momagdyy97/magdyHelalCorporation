@@ -110,7 +110,7 @@
       av.width = 18;
       av.height = 18;
       var name = el("span");
-      name.textContent = cfg.name || "مستشار M.H CORP";
+      name.textContent = cfg.name || "مستشار HELAL CORP";
       meta.appendChild(av);
       meta.appendChild(name);
       row.appendChild(meta);
@@ -148,7 +148,7 @@
     addMessage(
       "bot",
       cfg.welcome ||
-        "أهلاً بكم في مستشار مكتب مجدي هلال — M.H CORP. يمكن السؤال عن الضرائب، المراجعة، الفاتورة الإلكترونية، أو خدمات المكتب."
+        "أهلاً بكم في مستشار مكتب مجدي هلال — HELAL CORP. يمكن السؤال عن الضرائب، المراجعة، الفاتورة الإلكترونية، أو خدمات المكتب."
     );
   }
 
@@ -169,7 +169,7 @@
     av.width = 18;
     av.height = 18;
     var name = el("span");
-    name.textContent = cfg.name || "مستشار M.H CORP";
+    name.textContent = cfg.name || "مستشار HELAL CORP";
     meta.appendChild(av);
     meta.appendChild(name);
     var bubble = el("div", "mha-chat-bubble");

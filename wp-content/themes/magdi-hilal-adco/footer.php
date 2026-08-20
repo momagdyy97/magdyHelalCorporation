@@ -50,7 +50,7 @@
             </div>
         </div>
         <div class="mha-copy">
-            <span>جميع الحقوق محفوظة © <?php echo esc_html(gmdate('Y')); ?> مكتب مجدي هلال — M.H CORP</span>
+            <span>جميع الحقوق محفوظة © <?php echo esc_html(gmdate('Y')); ?> مكتب مجدي هلال — HELAL CORP</span>
         </div>
     </div>
 </footer>
@@ -61,7 +61,7 @@
         <?php echo mha_icon('whatsapp'); ?>
     </a>
     <?php endif; ?>
-    <button type="button" class="mha-float-btn mha-float-chat" id="mhaChatToggle" aria-label="مستشار M.H CORP" aria-expanded="false" aria-controls="mhaChatPanel">
+    <button type="button" class="mha-float-btn mha-float-chat" id="mhaChatToggle" aria-label="مستشار HELAL CORP" aria-expanded="false" aria-controls="mhaChatPanel">
         <?php echo mha_icon('chat'); ?>
     </button>
 </div>
