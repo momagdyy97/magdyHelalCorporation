@@ -42,6 +42,8 @@ services:
       - "${WP_PORT:-8088}:80"
     environment:
       MHA_SYNC_THEME: "1"
+      MHA_OPENAI_API_KEY: ${MHA_OPENAI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       WORDPRESS_DB_HOST: db
       WORDPRESS_DB_USER: ${MYSQL_USER:-magdi}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-changeme}

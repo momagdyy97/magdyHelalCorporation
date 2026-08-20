@@ -40,6 +40,8 @@ wp option update WPLANG "ar"
 wp theme activate magdi-hilal-adco
 
 wp eval 'if (function_exists("mha_seed_content")) { mha_seed_content(); echo "seeded\n"; } else { echo "seed function missing\n"; }'
+wp eval 'if (function_exists("mha_seed_news")) { mha_seed_news(true); echo "news seeded\n"; } else { echo "news seed missing\n"; }'
+wp eval 'if (function_exists("mha_chat_install")) { mha_chat_install(true); echo "chat ready\n"; } else { echo "chat install missing\n"; }'
 
 HELLO=$(wp post list --post_type=post --name=hello-world --format=ids 2>/dev/null || true)
 [ -n "$HELLO" ] && wp post delete $HELLO --force

@@ -62,12 +62,12 @@
 </footer>
 
 <div class="mha-float">
-    <a class="mha-float-btn mha-float-phone" href="<?php echo esc_url(mha_tel_href()); ?>" aria-label="اتصال">
-        <?php echo mha_icon('phone'); ?>
-    </a>
     <a class="mha-float-btn mha-float-wa" href="<?php echo esc_url(mha_whatsapp_link()); ?>" target="_blank" rel="noopener" aria-label="واتساب">
         <?php echo mha_icon('whatsapp'); ?>
     </a>
+    <button type="button" class="mha-float-btn mha-float-chat" id="mhaChatToggle" aria-label="مستشار M.H CORP" aria-expanded="false" aria-controls="mhaChatPanel">
+        <?php echo mha_icon('chat'); ?>
+    </button>
 </div>
 <button type="button" class="mha-top" id="mhaTop" aria-label="العودة للأعلى"><?php echo mha_icon('arrow'); ?></button>
 

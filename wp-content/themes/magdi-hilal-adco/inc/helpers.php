@@ -169,6 +169,13 @@ function mha_icon($name)
         'arrow' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14 7l-1.4 1.4L15.2 11H3v2h12.2l-2.6 2.6L14 17l5-5z"/></svg>',
         'search' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.8l-.3-.3A6.5 6.5 0 1014 15.5l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0A4.5 4.5 0 1114 9.5 4.5 4.5 0 019.5 14z"/></svg>',
         'whatsapp' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 00-8.7 15L2 22l5.2-1.4A10 10 0 1012 2zm5.2 14.2c-.2.6-1.2 1.1-1.7 1.2-.4.1-.9.1-1.5 0a14 14 0 01-6.2-3.9 10 10 0 01-2.2-3.6c-.3-1 .1-1.9.6-2.2.3-.2.8-.4 1.2 0l1.2 1.4c.2.3.3.6.1.9l-.5.8c-.1.2 0 .5.2.7l1.6 1.8c.5.5 1 .9 1.6 1.2.2.1.5.1.7-.1l.8-.6c.3-.2.6-.2.9 0l1.6 1c.5.3.6.8.4 1.4z"/></svg>',
+        'chat' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4V6a2 2 0 012-2zm3 5v2h10V9H7zm0 4v2h7v-2H7z"/></svg>',
+        'refresh' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.65 6.35A8 8 0 104 12h2a6 6 0 111.76 4.24L6 14v6h6l-2.47-2.47A8 8 0 0017.65 6.35z"/></svg>',
+        'close' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
+        'mic' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 003-3V6a3 3 0 00-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 0014 0h-2zm-5 9a1 1 0 001-1h2a3 3 0 01-3 3 3 3 0 01-3-3h2a1 1 0 001 1z"/></svg>',
+        'image' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 19V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2zM8.5 13.5l2.5 3 3.5-4.5 4.5 6H5l3.5-4.5zM8.5 8A1.5 1.5 0 1110 9.5 1.5 1.5 0 018.5 8z"/></svg>',
+        'speaker' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4v8a4.5 4.5 0 002.5-4zM14 3.2v2.1a7.5 7.5 0 010 13.4v2.1a9.5 9.5 0 000-17.6z"/></svg>',
+        'send-chat' => '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>',
     ];
 
     return $icons[$name] ?? '';
@@ -284,18 +291,29 @@ function mha_placeholder_projects()
 
 function mha_placeholder_news()
 {
+    if (function_exists('mha_curated_news')) {
+        $out = [];
+        foreach (array_slice(mha_curated_news(), 0, 3) as $item) {
+            $out[] = [
+                'title'   => $item['title'],
+                'excerpt' => $item['excerpt'],
+            ];
+        }
+        return $out;
+    }
+
     return [
         [
-            'title'   => 'ما الذي تغيّر في الفاتورة الإلكترونية للشركات الصغيرة؟',
-            'excerpt' => 'خطوات عملية يتابعها المكتب مع العملاء حتى لا يتوقف إصدار الفواتير أو يتأخر الإقرار.',
+            'title'   => 'منظومة الفاتورة الإلكترونية: ما الذي تتابعه الشركات مع مصلحة الضرائب؟',
+            'excerpt' => 'التسجيل على المنظومة، إصدار الفاتورة المعتمدة، وربط الدورة المستندية حتى لا يتوقف البيع أو يتأخر الإقرار.',
         ],
         [
-            'title'   => 'قبل موسم الإقرارات: قائمة مراجعة لمحاسب الشركة',
-            'excerpt' => 'بنود نراجعها داخلياً في المكتب مع كل ملف: المستندات، التسويات، والفروق الضريبية.',
+            'title'   => 'الإيصال الإلكتروني: من فاتورة الأعمال إلى التعامل مع المستهلك النهائي',
+            'excerpt' => 'الإيصال يغطي البيع للمستهلك غير المسجّل. الشركات مطالبة بتهيئة نقاط البيع والربط مع منظومة المصلحة وفق مراحل الإلزام.',
         ],
         [
-            'title'   => 'المراجعة ليست ورقة في نهاية السنة',
-            'excerpt' => 'كيف نخطط لعملية المراجعة على مدار العام حتى لا تتحول إلى ضغط في آخر ثلاثة أسابيع.',
+            'title'   => 'ضريبة القيمة المضافة: التسجيل والإقرار والخصم في إطار القانون 67 لسنة 2016',
+            'excerpt' => 'الإقرار الدوري، خصم الضريبة على المدخلات، والتعامل مع الفواتير المعتمدة — ثلاثة محاور تُراجع قبل أي موسم إقرارات.',
         ],
     ];
 }

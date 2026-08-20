@@ -40,6 +40,8 @@ services:
       WORDPRESS_DB_NAME: magdi_hilal
       WORDPRESS_TABLE_PREFIX: mha_
       MHA_SYNC_THEME: "0"
+      MHA_OPENAI_API_KEY: ${MHA_OPENAI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_REDIS_HOST', 'redis');
         define('WP_REDIS_PORT', 6379);

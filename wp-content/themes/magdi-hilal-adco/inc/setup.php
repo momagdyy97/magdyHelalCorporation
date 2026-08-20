@@ -32,6 +32,7 @@ function mha_setup()
 
     add_image_size('mha-card', 800, 560, true);
     add_image_size('mha-hero', 1600, 900, true);
+    add_image_size('mha-news-thumb', 240, 240, true);
 
     add_filter('locale', static function ($locale) {
         return is_admin() ? $locale : 'ar';

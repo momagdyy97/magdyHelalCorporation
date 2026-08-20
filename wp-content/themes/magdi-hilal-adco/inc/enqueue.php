@@ -58,8 +58,34 @@ function mha_enqueue()
         true
     );
 
+    wp_enqueue_script(
+        'mha-news',
+        MHA_URI . '/assets/js/news-carousel.js',
+        ['jquery'],
+        MHA_VERSION,
+        true
+    );
+
+    wp_enqueue_script(
+        'mha-chat',
+        MHA_URI . '/assets/js/chat.js',
+        [],
+        MHA_VERSION,
+        true
+    );
+
     wp_localize_script('mha-theme', 'mhaTheme', [
         'home' => home_url('/'),
+    ]);
+
+    wp_localize_script('mha-chat', 'mhaChat', [
+        'rest'     => esc_url_raw(rest_url('mha/v1/chat')),
+        'nonce'    => wp_create_nonce('wp_rest'),
+        'avatar'   => esc_url_raw(mha_img('logo-mark.png')),
+        'name'     => 'مستشار M.H CORP',
+        'welcome'  => 'أهلاً بكم في مستشار مكتب مجدي هلال — M.H CORP. يمكن السؤال عن الضرائب، المراجعة، الفاتورة الإلكترونية، أو خدمات المكتب.',
+        'maxLen'   => 1000,
+        'maxImage' => 512000,
     ]);
 }
 add_action('wp_enqueue_scripts', 'mha_enqueue');

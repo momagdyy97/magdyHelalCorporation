@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MHA_VERSION', '1.3.4');
+define('MHA_VERSION', '1.5.0');
 define('MHA_DIR', get_template_directory());
 define('MHA_URI', get_template_directory_uri());
 
@@ -19,4 +19,6 @@ require_once MHA_DIR . '/inc/enqueue.php';
 require_once MHA_DIR . '/inc/cpt.php';
 require_once MHA_DIR . '/inc/customizer.php';
 require_once MHA_DIR . '/inc/forms.php';
+require_once MHA_DIR . '/inc/news.php';
+require_once MHA_DIR . '/inc/chat.php';
 require_once MHA_DIR . '/inc/seed.php';
