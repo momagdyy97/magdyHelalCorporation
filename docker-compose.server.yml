@@ -1,5 +1,14 @@
-# Local Docker. Container listens on port 8088; WordPress public URL is WP_HOME.
-# Copy .env.example → .env and replace password placeholders before first run.
+# VPS Docker behind a reverse proxy (nginx/Caddy). Not used on InfinityFree shared hosting.
+#
+# Binds Apache only on loopback: 127.0.0.1:8088 → container :80
+# Public URL is still WP_HOME from .env (default https://magdyhelalcorp.infinityfree.io).
+#
+#   cp .env.example .env   # fill password placeholders
+#   docker compose -f docker-compose.server.yml up -d
+#
+# An InfinityFree *.infinityfree.io subdomain does not point at your VPS unless you
+# control DNS for a custom domain. Setting WP_HOME to the InfinityFree host while
+# this stack runs on a VPS will not make that hostname resolve here.
 
 services:
   db:
@@ -35,7 +44,7 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "${WP_PORT:-8088}:80"
+      - "127.0.0.1:${WP_PORT:-8088}:80"
     environment:
       WORDPRESS_DB_HOST: db
       WORDPRESS_DB_USER: ${MYSQL_USER:-magdi}

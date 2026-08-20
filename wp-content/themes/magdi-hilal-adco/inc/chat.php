@@ -15,7 +15,7 @@ if (function_exists('mb_internal_encoding')) {
     mb_internal_encoding('UTF-8');
 }
 
-define('MHA_CHAT_DB_VERSION', 2);
+define('MHA_CHAT_DB_VERSION', 3);
 define('MHA_CHAT_MAX_LEN', 1000);
 define('MHA_CHAT_RATE', 20);
 
@@ -130,8 +130,11 @@ function mha_chat_purge_dev_hosts_from_knowledge()
         'https://127.0.0.1:8088',
         'http://localhost',
         'https://localhost',
+        'http://magdy.modevops.fun',
+        'https://magdy.modevops.fun',
         'localhost:8088',
         '127.0.0.1:8088',
+        'magdy.modevops.fun',
     ];
     foreach ($fields as $field) {
         foreach ($froms as $from) {
@@ -290,6 +293,7 @@ function mha_chat_rewrite_dev_hosts($text)
             '#https?://127\.0\.0\.1:8088#i',
             '#https?://localhost(?!:)#i',
             '#https?://127\.0\.0\.1(?!:)#i',
+            '#https?://magdy\.modevops\.fun#i',
         ],
         $origin,
         $text
@@ -301,6 +305,9 @@ function mha_chat_rewrite_dev_hosts($text)
     if (strcasecmp($bare, '127.0.0.1:8088') !== 0) {
         $text = str_ireplace('127.0.0.1:8088', $bare, $text);
     }
+    if (strcasecmp($bare, 'magdy.modevops.fun') !== 0) {
+        $text = str_ireplace('magdy.modevops.fun', $bare, $text);
+    }
     return $text;
 }
 
@@ -308,15 +315,15 @@ function mha_chat_expand_facts($text)
 {
     $d = mha_defaults();
     $map = [
-        '{{url:home}}'     => '',
-        '{{url:about}}'    => '',
-        '{{url:services}}' => '',
-        '{{url:team}}'     => '',
-        '{{url:clients}}'  => '',
-        '{{url:projects}}' => '',
-        '{{url:news}}'     => '',
-        '{{url:contact}}'  => '',
-        '{{url:quote}}'    => '',
+        '{{url:home}}'     => mha_chat_page_url('home'),
+        '{{url:about}}'    => mha_chat_page_url('about'),
+        '{{url:services}}' => mha_chat_page_url('services'),
+        '{{url:team}}'     => mha_chat_page_url('team'),
+        '{{url:clients}}'  => mha_chat_page_url('clients'),
+        '{{url:projects}}' => mha_chat_page_url('projects'),
+        '{{url:news}}'     => mha_chat_page_url('news'),
+        '{{url:contact}}'  => mha_chat_page_url('contact'),
+        '{{url:quote}}'    => mha_chat_page_url('contact'),
         '{{phone}}'        => mha_phone_display(),
         '{{email}}'        => mha_mod('mha_email', $d['email']),
         '{{address}}'      => mha_mod('mha_address', $d['address']),
@@ -330,10 +337,11 @@ function mha_chat_scrub_reply($text)
 {
     $text = mha_chat_expand_facts($text);
     $text = mha_chat_rewrite_dev_hosts($text);
-    $text = preg_replace('#\[([^\]]+)\]\(\s*https?://(?:localhost|127\.0\.0\.1)(?::\d+)?[^)]*\)#i', '$1', $text);
-    $text = preg_replace('#https?://(?:localhost|127\.0\.0\.1)(?::\d+)?#i', '', $text);
+    $text = preg_replace('#\[([^\]]+)\]\(\s*https?://(?:localhost|127\.0\.0\.1|magdy\.modevops\.fun)(?::\d+)?[^)]*\)#i', '$1', $text);
+    $text = preg_replace('#https?://(?:localhost|127\.0\.0\.1|magdy\.modevops\.fun)(?::\d+)?#i', '', $text);
     $text = preg_replace('#\b(?:localhost|127\.0\.0\.1):\d+\b#i', '', $text);
     $text = preg_replace('#\b(?:localhost|127\.0\.0\.1)\b#i', '', $text);
+    $text = preg_replace('#\bmagdy\.modevops\.fun\b#i', '', $text);
     $text = preg_replace('/:8088\b/', '', $text);
     $text = preg_replace('/:\s*(?=\n|$)/u', '', $text);
     $text = preg_replace('/[ \t]{2,}/u', ' ', $text);
@@ -749,7 +757,7 @@ function mha_chat_openai_reply($message, array $chunks, $agent, $lang)
         $context .= '# ' . ($chunk['title'] ?? '') . "\n" . mha_chat_expand_facts($chunk['body'] ?? '') . "\n\n";
     }
 
-    $system = 'أنت مستشار مهني لمكتب مجدي هلال — M.H CORP في مدينة نصر، القاهرة. أجب بالعربية الفصحى المهنية أساساً. إذا كان سؤال المستخدم بالإنجليزية أضف سطراً إنجليزياً قصيراً في النهاية. لا تختلق مواد قانونية. اعتمد فقط على السياق المعطى وبيانات المكتب. أوضح أن الكلام معلومات عامة وليست استشارة قانونية مرخّصة. لا تذكر فيسبوك ولا إبراهيم هلال. لا تدرج روابط URL في نص الرد ولا تذكر localhost أو 127.0.0.1 أو أرقام المنافذ. اذكر أسماء الصفحات بالعربية فقط (من نحن، خدماتنا، تواصل معنا)؛ الأزرار تظهر منفصلة.';
+    $system = 'أنت مستشار مهني لمكتب مجدي هلال — M.H CORP في مدينة نصر، القاهرة. أجب بالعربية الفصحى المهنية أساساً. إذا كان سؤال المستخدم بالإنجليزية أضف سطراً إنجليزياً قصيراً في النهاية. لا تختلق مواد قانونية. اعتمد فقط على السياق المعطى وبيانات المكتب. أوضح أن الكلام معلومات عامة وليست استشارة قانونية مرخّصة. لا تذكر فيسبوك ولا إبراهيم هلال. لا تدرج روابط URL في نص الرد ولا تذكر localhost أو 127.0.0.1 أو modevops.fun أو أرقام المنافذ. اذكر أسماء الصفحات بالعربية فقط (من نحن، خدماتنا، تواصل معنا)؛ الأزرار تظهر منفصلة.';
 
     $payload = [
         'model'       => 'gpt-4o-mini',

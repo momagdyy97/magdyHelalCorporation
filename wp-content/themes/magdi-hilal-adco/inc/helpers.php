@@ -100,7 +100,7 @@ function mha_defaults()
         'phone'       => '+201000354045',
         'phone_alt'   => '',
         'whatsapp'    => '201000354045',
-        'email'       => 'magdy.hilal@co',
+        'email'       => 'momagdyy97@gmail.com',
         'address'     => 'مدينة نصر، القاهرة',
         'hero_kicker' => 'M.H CORP',
         'hero_title'  => 'خبرة محاسبية تقود قرارات أوضح',

@@ -20,7 +20,7 @@ function mha_maybe_seed()
         return;
     }
 
-    if ((int) get_option('mha_brand_version') < 3) {
+    if ((int) get_option('mha_brand_version') < 4) {
         mha_apply_branding(true);
     }
 }
@@ -223,7 +223,7 @@ function mha_apply_branding($force = true)
 
     mha_purge_ibrahim();
     mha_ensure_custom_logo(true);
-    update_option('mha_brand_version', 3);
+    update_option('mha_brand_version', 4);
 }
 
 function mha_strip_ibrahim_text($text)

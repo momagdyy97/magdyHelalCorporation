@@ -5,48 +5,47 @@
 الاسم الظاهر: **مكتب مجدي هلال — MAGDY HELAL CORP**  
 المدير: المحاسب القانوني والمستشار الضريبي **مجدي هلال**، مع فريق نحو 20–30 محاسباً.
 
-لا يوجد دومين بعد. التشغيل المحلي: `http://localhost:8088`.
+**الدومين:** [https://magdyhelalcorp.infinityfree.io](https://magdyhelalcorp.infinityfree.io)
+
+هذا العنوان على **InfinityFree shared hosting** وليس Docker. خطوات الرفع والتشغيل: **[HOSTING.md](HOSTING.md)** (القسمان A و B).
 
 ## بيانات التواصل
 
 | | |
 | --- | --- |
-| البريد | `magdy.hilal@co` |
+| البريد | `momagdyy97@gmail.com` |
 | الهاتف | `+201000354045` |
 | واتساب (دولي بدون +) | `201000354045` |
 | العنوان | مدينة نصر، القاهرة |
 
 عدّلها لاحقاً من: **المظهر → تخصيص → مكتب مجدي هلال**
 
-## المطلوب على جهازك
+## المطلوب على جهازك (Docker محلي فقط)
 
 - Docker و Docker Compose
-- منفذ `8088` فارغ (الموقع مضبوط على 8088 لأن 8080 غالباً يكون مشغولاً)
+- منفذ `8088` فارغ لربط الحاوية (ووردبريس العام يبقى `WP_HOME`)
 
-لا تحتاج تثبيت PHP أو MySQL أو ووردبريس يدوياً.
+لا تحتاج تثبيت PHP أو MySQL أو ووردبريس يدوياً للتجربة المحلية.
 
 ## التشغيل المحلي (المشروع كاملاً)
 
-من مجلد المشروع:
-
 ```bash
+cp .env.example .env
+# املأ MYSQL_PASSWORD و MYSQL_ROOT_PASSWORD و WP_ADMIN_PASSWORD
+# اترك WP_HOME / WP_SITEURL / WP_URL = https://magdyhelalcorp.infinityfree.io
+
 docker compose up -d --build
-```
-
-انتظر حتى تصبح حاوية `wordpress` جاهزة (أول مرة تنسخ ملفات ووردبريس). ثم ثبّت الموقع والصفحات:
-
-```bash
 docker compose --profile tools run --rm --entrypoint sh wpcli /scripts/setup.sh
 ```
 
-افتح:
+- الحاوية: المنفذ `8088`
+- عنوان ووردبريس العام: `https://magdyhelalcorp.infinityfree.io`
+- المستخدم: من `WP_ADMIN_USER` في `.env` (افتراضي `admin`)
+- كلمة المرور: من `WP_ADMIN_PASSWORD` في `.env` — لا تُحفظ فارغة في Git
 
-- الموقع: http://localhost:8088
-- لوحة التحكم: http://localhost:8088/wp-admin
-- المستخدم: `admin`
-- كلمة المرور: `admin`
+للتفاصيل ومعاينة محلية بحتة عبر `http://localhost:8088` انظر **[HOSTING.md](HOSTING.md)** القسم B.
 
-**غيّر كلمة مرور الأدمن قبل أي نشر.** لا تضع كلمة الأدمن داخل صورة Docker Hub العامة.
+**غيّر كلمة مرور الأدمن قبل أي نشر.** لا تضع كلمة الأدمن داخل صورة Docker Hub العامة. لا ترفع ملف `.env`.
 
 إيقاف:
 
@@ -62,7 +61,7 @@ docker compose down -v
 
 ## معاينة للعميل / Screenshots
 
-الموقع يعمل محلياً فقط. لعرضه على العميل أو الزملاء، صوّر الصفحات أو أرسل مجلد اللقطات:
+لقطات في:
 
 `screenshots/`
 
@@ -115,22 +114,24 @@ zip -r magdy-helal-corp-screenshots.zip screenshots
 ## المعمارية
 
 ```
+HOSTING.md                  خطوات InfinityFree (A) و Docker (B)
 docker-compose.yml          تطوير محلي: WordPress + MySQL 8 + Redis 7 + ربط القالب
 docker-compose.prod.yml     تشغيل الصورة المنشورة + MySQL + Redis
+docker-compose.server.yml   VPS: ربط 127.0.0.1:8088:80 و WP_HOME من البيئة
 Dockerfile                  PHP 8.2 + Redis + القالب داخل الصورة
 wp-content/themes/magdi-hilal-adco/
   inc/                      إعداد، CPT، تخصيص، نماذج، بيانات أولية، أخبار، دردشة
   template-parts/           أقسام الصفحة الرئيسية (ومنها شريط الأخبار)
   page-templates/           قوالب الصفحات
   assets/                   CSS / JS / صور / الشعار
-wp-content/mu-plugins/      إعدادات خفيفة (Redis + السماح ببريد magdy.hilal@co)
+wp-content/mu-plugins/      إعدادات خفيفة (Redis اختياري على Docker)
 scripts/setup.sh            تثبيت عربي + تفعيل القالب + Redis
 screenshots/                لقطات للعميل
 ```
 
 - **WordPress** يخدم الصفحات والقالب.
-- **MySQL** يخزن المحتوى. بيانات قاعدة التطوير المحلية ليست حسابات المكتب العامة.
-- **Redis** كاش الكائنات عبر إضافة Redis Object Cache بعد `setup.sh`.
+- **MySQL** يخزن المحتوى. على InfinityFree استخدم أسماء القاعدة من لوحة التحكم (غالباً مسبوقة)، وليس بالضرورة `magdi` / `magdi_hilal`.
+- **Redis** كاش اختياري في Docker. على الاستضافة المشتركة الموقع يعمل بدون Redis.
 - القالب لا يعتمد على Elementor. التعديل إما من الصفحات/أنواع المحتوى أو من ملفات القالب.
 
 أنواع محتوى إضافية في لوحة التحكم: الخدمات، فريق العمل، العملاء، المشاريع.
@@ -149,7 +150,7 @@ screenshots/                لقطات للعميل
 
 زر ذهبي في عمود الأزرار العائمة (تحت الهاتف وواتساب) يفتح لوحة **مستشار M.H CORP** على كل الصفحات. يقبل العربية أو الإنجليزية، ويرد أساساً بالعربية (مع سطر إنجليزي قصير إن كان السؤال بالإنجليزية).
 
-المسار الافتراضي يعمل **بدون مفتاح OpenAI**: موجّه وكلاء في PHP (`guide` / `tax` / `audit` / `accounting` / `economy`) يسترجع مقاطع من جدول المعرفة في MySQL ويركب رداً مهنياً مع روابط صفحات الموقع.
+المسار الافتراضي يعمل **بدون مفتاح OpenAI**: موجّه وكلاء في PHP (`guide` / `tax` / `audit` / `accounting` / `economy`) يسترجع مقاطع من جدول المعرفة في MySQL ويركب رداً مهنياً. أزرار الصفحات تُبنى من `home_url()` وفق عنوان الموقع في الإعدادات.
 
 الجداول (بادئة ووردبريس هنا `mha_`):
 
@@ -158,6 +159,8 @@ screenshots/                لقطات للعميل
 | `mha_chat_sessions` | جلسات الزائر |
 | `mha_chat_messages` | رسائل المستخدم والرد |
 | `mha_chat_knowledge` | قاعدة المعرفة |
+
+تُنشأ الجداول عند تحميل القالب عبر `mha_chat_install`.
 
 لوحة التحكم: **محادثات الاستشارة** (عرض فقط).
 
@@ -173,11 +176,9 @@ REST: `POST /wp-json/mha/v1/chat` مع `{ "session", "message" }` وترويسة
 
 `momousa1997/magdyhelalcorp`
 
-(نفس المستودع؛ الواجهة تعرضه بالأحرف الصغيرة.)
-
 الصورة تحتوي ووردبريس + PHP 8.2 + القالب + mu-plugins. **ليست** المكدس كاملاً: MySQL و Redis يبقيان خدمتين منفصلتين (انظر `docker-compose.prod.yml`).
 
-لا تُخبز كلمات مرور الأدمن أو قاعدة البيانات داخل الصورة. القالب آمن للرفع؛ بيانات MySQL/Redis تُمرَّر من متغيرات البيئة.
+لا تُخبز كلمات مرور الأدمن أو قاعدة البيانات داخل الصورة.
 
 ### بناء الصورة
 
@@ -187,7 +188,7 @@ docker build -t momousa1997/magdyhelalcorp:latest .
 
 ### تسجيل الدخول، الوسم، والدفع
 
-يلزم حساب Docker Hub باسم `momousa1997` ومستودع `magdyhelalcorp`. أنشئ المستودع من https://hub.docker.com إن لم يكن موجوداً (Create Repository → الاسم `magdyhelalcorp`).
+يلزم حساب Docker Hub باسم `momousa1997` ومستودع `magdyhelalcorp`.
 
 ```bash
 docker login
@@ -195,68 +196,27 @@ docker tag momousa1997/magdyhelalcorp:latest momousa1997/magdyhelalcorp:latest
 docker push momousa1997/magdyhelalcorp:latest
 ```
 
-`docker login` تفاعلي (اسم مستخدم وكلمة مرور أو رمز وصول). إذا لم تكن مسجّلاً، الأمر ينتظر الإدخال ولا يكتمل من تلقاء نفسه.
-
 ### تشغيل الصورة المنشورة
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-أو يدوياً (مع MySQL و Redis):
+`WP_HOME` و `WP_SITEURL` يُقرآن من `.env` والافتراضي هو `https://magdyhelalcorp.infinityfree.io`.
 
-```yaml
-services:
-  db:
-    image: mysql:8.0
-    environment:
-      MYSQL_DATABASE: magdi_hilal
-      MYSQL_USER: magdi
-      MYSQL_PASSWORD: changeme
-      MYSQL_ROOT_PASSWORD: changeme_root
-    volumes:
-      - db_data:/var/lib/mysql
+## بعد الرفع على الدومين
 
-  redis:
-    image: redis:7-alpine
+انظر **[HOSTING.md](HOSTING.md)**. باختصار:
 
-  wordpress:
-    image: momousa1997/magdyhelalcorp:latest
-    ports:
-      - "8088:80"
-    environment:
-      WORDPRESS_DB_HOST: db
-      WORDPRESS_DB_USER: magdi
-      WORDPRESS_DB_PASSWORD: changeme
-      WORDPRESS_DB_NAME: magdi_hilal
-      WORDPRESS_TABLE_PREFIX: mha_
-      WORDPRESS_CONFIG_EXTRA: |
-        define('WP_REDIS_HOST', 'redis');
-        define('WP_REDIS_PORT', 6379);
-        define('WP_HOME', 'http://localhost:8088');
-        define('WP_SITEURL', 'http://localhost:8088');
-        define('FS_METHOD', 'direct');
-    depends_on:
-      - db
-      - redis
-
-volumes:
-  db_data:
-```
-
-بعد أول تشغيل للصورة المنشورة تحتاج تثبيت ووردبريس (أو تشغيل سكربت الإعداد إن وفّرت wp-cli). التطوير المحلي يستخدم `docker-compose.yml` + `setup.sh` كما فوق.
-
-## بعد أن يتوفر الدومين
-
-1. غيّر `WP_HOME` و `WP_SITEURL` في compose أو من **الإعدادات → عام**.
-2. غيّر كلمة مرور `admin`.
-3. راجع الهاتف والبريد والعنوان في المخصص إن لزم.
-4. ارفع شعارات العملاء الحقيقية وصور الفريق.
+1. Settings → General: العنوانان = `https://magdyhelalcorp.infinityfree.io`
+2. غيّر كلمة مرور `admin`
+3. راجع الهاتف والبريد والعنوان في المخصص
+4. ارفع شعارات العملاء الحقيقية وصور الفريق
 
 ## ملاحظات
 
 - الأرقام الإحصائية (سنوات / عملاء) تقديرية للعرض. صحّحها من المخصص.
 - واتساب يستخدم الرقم الدولي بدون `+`: `201000354045`. الهاتف المعروض: `+201000354045` (اتجاه LTR حتى لا ينعكس في العربية).
-- إذا ظهرت صفحة ووردبريس الافتراضية بدل القالب، أعد تشغيل `setup.sh`.
-- إذا فشل Redis، الموقع يعمل بدون كاش. راقب: `docker compose logs redis`.
+- إذا ظهرت صفحة ووردبريس الافتراضية بدل القالب، أعد تشغيل `setup.sh` أو فعّل القالب من لوحة التحكم.
+- إذا فشل Redis، الموقع يعمل بدون كاش.
 # magdyHelalCorporation

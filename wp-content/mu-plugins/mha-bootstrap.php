@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: MAGDY HELAL CORP Bootstrap
- * Description: Local defaults — Redis, UTF-8, and seed reminders.
+ * Description: Optional Redis constants on Docker; seed reminder; email allow-list.
  * Author: MAGDY HELAL CORP
  */
 
@@ -9,8 +9,16 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+/*
+ * Redis is optional. InfinityFree shared hosting has no Redis service.
+ * Docker compose sets WP_REDIS_HOST in WORDPRESS_CONFIG_EXTRA.
+ * Do not default the hostname to "redis" — that would break shared hosts.
+ */
 if (!defined('WP_REDIS_HOST')) {
-    define('WP_REDIS_HOST', 'redis');
+    $mha_redis = getenv('WP_REDIS_HOST');
+    if (is_string($mha_redis) && $mha_redis !== '') {
+        define('WP_REDIS_HOST', $mha_redis);
+    }
 }
 if (!defined('WP_REDIS_PORT')) {
     define('WP_REDIS_PORT', 6379);
@@ -31,8 +39,17 @@ add_action('admin_notices', static function () {
 });
 
 add_filter('is_email', static function ($is_email, $email) {
-    if (is_string($email) && strcasecmp($email, 'magdy.hilal@co') === 0) {
-        return $email;
+    if (!is_string($email)) {
+        return $is_email;
+    }
+    $allow = [
+        'momagdyy97@gmail.com',
+        'magdy.hilal@co',
+    ];
+    foreach ($allow as $ok) {
+        if (strcasecmp($email, $ok) === 0) {
+            return $email;
+        }
     }
     return $is_email;
 }, 10, 2);
