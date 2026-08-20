@@ -105,6 +105,30 @@ sudo nginx -t && sudo systemctl reload nginx
 
 Confirm **Settings → General** (or `wp option get home`) is `https://helal.co` with no trailing slash.
 
+### 6. MySQL backup (1st and 16th at 00:00 Cairo)
+
+`scripts/backup-db.sh` dumps `${MYSQL_DATABASE:-magdi_hilal}` through `docker compose -f docker-compose.server.yml exec -T db mysqldump`, then gzip-compresses to `helal-YYYY-MM-DD_HHMM.sql.gz` with mode `600`. The backup directory is `/var/backups/helal-mysql` (`700`); if that path is not writable, dumps go to `./backups/mysql` in the repo (gitignored). Credentials come from `/opt/magdyHelalCorporation/.env` (or the project `.env`). The script never prints the password. The last 6 dumps are kept (~3 months).
+
+```bash
+chmod 700 /opt/magdyHelalCorporation/scripts/backup-db.sh
+crontab -e
+```
+
+Paste (Debian/Ubuntu cron honors `CRON_TZ`):
+
+```
+CRON_TZ=Africa/Cairo
+0 0 1,16 * * /opt/magdyHelalCorporation/scripts/backup-db.sh
+```
+
+If `CRON_TZ` is unavailable:
+
+```
+0 0 1,16 * * TZ=Africa/Cairo /opt/magdyHelalCorporation/scripts/backup-db.sh
+```
+
+An example crontab is in `scripts/helal-backup.cron`. Errors append to `/var/log/helal-mysql-backup.log` when writable, otherwise to the backup directory.
+
 Admin email (`WP_ADMIN_EMAIL`) and the public office inbox are both `info@helal.co`.
 
 | Public contact | |

@@ -1,0 +1,12 @@
+# HELAL CORP — MySQL dump twice a month at 00:00 Africa/Cairo (1st and 16th).
+#
+# Install as the deploy user who can run docker compose:
+#   chmod 700 /opt/magdyHelalCorporation/scripts/backup-db.sh
+#   crontab -e
+# Paste the two lines below (Debian / Ubuntu cron honors CRON_TZ).
+#
+# If CRON_TZ is unavailable, use this instead:
+#   0 0 1,16 * * TZ=Africa/Cairo /opt/magdyHelalCorporation/scripts/backup-db.sh
+#
+CRON_TZ=Africa/Cairo
+0 0 1,16 * * /opt/magdyHelalCorporation/scripts/backup-db.sh

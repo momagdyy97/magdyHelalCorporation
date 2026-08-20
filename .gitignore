@@ -14,3 +14,8 @@ node_modules/
 vendor/
 .idea/
 .vscode/
+
+# Local MySQL dumps (cron fallback if /var/backups/helal-mysql is not writable)
+/backups/
+/backups/**/*.sql
+/backups/**/*.sql.gz

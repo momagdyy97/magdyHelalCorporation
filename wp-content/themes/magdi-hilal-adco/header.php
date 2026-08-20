@@ -41,7 +41,7 @@
     <nav class="navbar navbar-expand-xl navbar-light">
         <div class="container">
             <a class="navbar-brand mha-brand mb-0" href="<?php echo esc_url(home_url('/')); ?>" rel="home">
-                <img src="<?php echo esc_url(mha_img('logo.png')); ?>" alt="HELAL CORP — مكتب مجدي هلال" class="mha-brand-logo custom-logo" width="215" height="40">
+                <img src="<?php echo esc_url(mha_img('logo.png')); ?>" alt="HELAL CORP" class="mha-brand-logo custom-logo" width="240" height="40">
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mhaNav" aria-controls="mhaNav" aria-expanded="false" aria-label="القائمة">
                 <span class="navbar-toggler-icon"></span>

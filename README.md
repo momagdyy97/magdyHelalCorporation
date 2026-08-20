@@ -47,6 +47,22 @@ docker compose --profile tools run --rm --entrypoint sh wpcli /scripts/setup.sh
 
 للتفاصيل والنشر على الـ VPS انظر **[HOSTING.md](HOSTING.md)**.
 
+## نسخة احتياطية لقاعدة البيانات (VPS)
+
+نسخة MySQL مرتين شهرياً في **00:00 بتوقيت القاهرة** (يوم 1 و16). على السيرفر:
+
+```bash
+chmod 700 /opt/magdyHelalCorporation/scripts/backup-db.sh
+crontab -e
+```
+
+```
+CRON_TZ=Africa/Cairo
+0 0 1,16 * * /opt/magdyHelalCorporation/scripts/backup-db.sh
+```
+
+الملفات: `/var/backups/helal-mysql/helal-YYYY-MM-DD_HHMM.sql.gz` (صلاحية `600`). التفاصيل في **[HOSTING.md](HOSTING.md)**.
+
 **غيّر كلمة مرور الأدمن قبل أي نشر.** لا تضع كلمة الأدمن داخل صورة Docker Hub العامة. لا ترفع ملف `.env`.
 
 إيقاف:
@@ -77,7 +93,7 @@ zip -r magdy-helal-corp-screenshots.zip screenshots
 
 | ملف | المحتوى |
 | --- | --- |
-| `00-logo.png` | شعار MAGDY HELAL CORP |
+| `00-logo.png` | شعار HELAL CORP |
 | `00b-logo-header.png` | الشعار في رأس الصفحة |
 | `00c-logo-footer.png` | الشعار في التذييل |
 | `01-home.png` | الرئيسية |
@@ -96,7 +112,7 @@ zip -r magdy-helal-corp-screenshots.zip screenshots
 | `11-home-tablet-768.png` | الرئيسية على الجهاز اللوحي (768) |
 | `12-home-laptop-1024.png` | الرئيسية على لابتوب (1024) — قائمة همبرغر |
 
-الشعار الأصلي أيضاً في `wp-content/themes/magdi-hilal-adco/assets/img/logo.png` (و`logo-white.png` للتذييل). يمكن رفع شعار آخر من **المظهر → تخصيص → هوية الموقع**.
+الشعار الأصلي أيضاً في `wp-content/themes/magdi-hilal-adco/assets/img/logo.png` (و`logo-white.png` للتذييل) — كلمة **HELAL CORP** فقط بدون شارة MH. يمكن رفع شعار آخر من **المظهر → تخصيص → هوية الموقع**.
 
 ## ماذا يوجد في الموقع
 
@@ -128,6 +144,7 @@ wp-content/themes/magdi-hilal-adco/
   assets/                   CSS / JS / صور / الشعار
 wp-content/mu-plugins/      إعدادات خفيفة (Redis اختياري على Docker)
 scripts/setup.sh            تثبيت عربي + تفعيل القالب + Redis
+scripts/backup-db.sh        نسخة MySQL (1 و16 من كل شهر 00:00 القاهرة)
 screenshots/                لقطات للعميل
 ```
 

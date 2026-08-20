@@ -311,10 +311,10 @@ function mha_ensure_custom_logo($force = false)
     }
 
     $file_array = [
-        'name'     => 'mh-corp-logo.png',
+        'name'     => 'helal-corp-logo.png',
         'tmp_name' => $tmp,
     ];
-    $id = media_handle_sideload($file_array, 0, 'Magdy Helal Corp');
+    $id = media_handle_sideload($file_array, 0, 'HELAL CORP');
     if (!is_wp_error($id)) {
         set_theme_mod('custom_logo', $id);
         update_option('mha_logo_hash', $hash);
@@ -328,9 +328,9 @@ function mha_ensure_custom_logo($force = false)
         $tmp_icon = wp_tempnam('mha-mark.png');
         if ($tmp_icon && copy($mark, $tmp_icon)) {
             $icon = media_handle_sideload([
-                'name'     => 'mh-corp-mark.png',
+                'name'     => 'helal-corp-mark.png',
                 'tmp_name' => $tmp_icon,
-            ], 0, 'Magdy Helal Corp mark');
+            ], 0, 'HELAL CORP');
             if (!is_wp_error($icon)) {
                 update_option('site_icon', (int) $icon);
             }

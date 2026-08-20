@@ -12,7 +12,7 @@
         <div class="row">
             <div class="col-lg-4 mb-4 mb-lg-0 mha-footer-col">
                 <div class="mha-footer-brand">
-                    <img src="<?php echo esc_url(mha_img('logo-white.png')); ?>" alt="HELAL CORP — مكتب مجدي هلال" class="mha-footer-logo" width="215" height="40">
+                    <img src="<?php echo esc_url(mha_img('logo-white.png')); ?>" alt="HELAL CORP" class="mha-footer-logo" width="240" height="40">
                     <p>مكتب محاسبة ومراجعة واستشارات ضريبية في مدينة نصر، بقيادة المحاسب القانوني والمستشار الضريبي مجدي هلال وفريق يضم نحو 20 إلى 30 محاسباً.</p>
                     <p class="mha-footer-meta">
                         <?php echo mha_icon('pin'); ?>
