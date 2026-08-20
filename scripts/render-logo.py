@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
-"""Render the M.H CORP wordmark lockup and a square M.H mark (favicon).
+"""Render HELAL CORP lockup: MH badge + one-line wordmark, plus a square MH mark.
 
-One identity: a single crafted wordmark. No badge beside matching letters.
+The graphic mark keeps both M and H (classical slab stems, gold inner ring).
+The wordmark is HELAL CORP — never M.H CORP, never a hairline divider.
+Liberation Serif Bold TTF only (Type1 C059 garbles Latin in cairo).
 """
 from __future__ import annotations
 
+import math
 import os
+from io import BytesIO
 
+import cairo
 from PIL import Image, ImageDraw, ImageFont
 
-NAVY = (0x0B, 0x3D, 0x5C, 255)
-GOLD = (0xC4, 0xA3, 0x5A, 255)
-WHITE = (255, 255, 255, 255)
+NAVY = (0x0B / 255, 0x3D / 255, 0x5C / 255)
+GOLD = (0xC4 / 255, 0xA3 / 255, 0x5A / 255)
+WHITE = (1.0, 1.0, 1.0)
+NAVY_RGBA = (0x0B, 0x3D, 0x5C, 255)
+GOLD_RGBA = (0xC4, 0xA3, 0x5A, 255)
+WHITE_RGBA = (255, 255, 255, 255)
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 IMG = os.path.join(ROOT, "wp-content/themes/magdi-hilal-adco/assets/img")
@@ -34,11 +42,15 @@ def serif_path() -> str:
 
 
 def serif_font(size: float) -> ImageFont.FreeTypeFont:
+    """TTF only — Type1 faces like C059 render as broken Latin glyphs."""
     return ImageFont.truetype(serif_path(), size=max(8, int(round(size))))
 
 
+def rgb_to_rgba(rgb) -> tuple[int, int, int, int]:
+    return (int(round(rgb[0] * 255)), int(round(rgb[1] * 255)), int(round(rgb[2] * 255)), 255)
+
+
 def glyph(ch: str, font: ImageFont.FreeTypeFont, fill) -> tuple[Image.Image, int, int]:
-    """Tight glyph image plus top/bottom offsets relative to the font baseline."""
     dummy = Image.new("RGBA", (8, 8), (0, 0, 0, 0))
     bbox = ImageDraw.Draw(dummy).textbbox((0, 0), ch, font=font)
     w = max(1, bbox[2] - bbox[0])
@@ -48,169 +60,296 @@ def glyph(ch: str, font: ImageFont.FreeTypeFont, fill) -> tuple[Image.Image, int
     return img, bbox[1], bbox[3]
 
 
-def paste(canvas: Image.Image, piece: Image.Image, x: int, y: int) -> None:
+def paste(canvas: Image.Image, piece: Image.Image, x: float, y: float) -> None:
     canvas.alpha_composite(piece, (int(round(x)), int(round(y))))
 
 
-def crop_pad(img: Image.Image, pad_x: int, pad_y: int, square: bool = False) -> Image.Image:
-    bbox = img.getbbox()
-    if not bbox:
-        return img
-    l, t, r, b = bbox
-    l = max(0, l - pad_x)
-    t = max(0, t - pad_y)
-    r = min(img.width, r + pad_x)
-    b = min(img.height, b + pad_y)
-    if square:
-        side = max(r - l, b - t)
-        cx = (l + r) / 2.0
-        cy = (t + b) / 2.0
-        l = int(round(cx - side / 2.0))
-        t = int(round(cy - side / 2.0))
-        r = l + side
-        b = t + side
-        out = Image.new("RGBA", (side, side), (0, 0, 0, 0))
-        out.alpha_composite(img, (-l, -t))
-        return out
-    return img.crop((l, t, r, b))
+def compose_wordmark(helal_fill, corp_fill, *, size: float) -> Image.Image:
+    """One line: HELAL + CORP. No divider, no M.H."""
+    font = serif_font(size)
+    helal = [glyph(ch, font, helal_fill) for ch in "HELAL"]
+    corp = [glyph(ch, font, corp_fill) for ch in "CORP"]
+    tracking = size * 0.012
+    word_gap = size * 0.16
 
-
-def save(img: Image.Image, path: str) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    img.save(path, "PNG")
-    print("wrote", path, img.width, "x", img.height)
-
-
-def compose_wordmark(mh_fill, corp_fill, hairline_fill, *, size: float = 220.0) -> Image.Image:
-    """Single-line lockup: navy (or white) M.H, gold hairline, gold CORP."""
-    mh_font = serif_font(size)
-    corp_font = serif_font(size)
-
-    m_img, m_top, m_bot = glyph("M", mh_font, mh_fill)
-    p_img, p_top, p_bot = glyph(".", mh_font, mh_fill)
-    h_img, h_top, h_bot = glyph("H", mh_font, mh_fill)
-
-    corp_glyphs = [glyph(ch, corp_font, corp_fill) for ch in "CORP"]
-
-    cap_top = min(m_top, h_top)
-    cap_bot = max(m_bot, h_bot)
-    cap_h = cap_bot - cap_top
-
-    # Tight, even air around the periods; slight optical lift so the dots do not sit heavy.
-    gap_letter_dot = size * 0.034
-    period_lift = size * 0.05
-    gap_mh_line = size * 0.185
-    hair_w = max(5, int(round(size * 0.028)))
-    hair_h = cap_h * 0.70
-    gap_line_corp = size * 0.185
-    corp_tracking = size * 0.048
-
-    corp_w = sum(g[0].width for g in corp_glyphs) + corp_tracking * (len(corp_glyphs) - 1)
-    tops = [m_top, p_top - period_lift, h_top] + [g[1] for g in corp_glyphs]
-    bots = [m_bot, p_bot - period_lift, h_bot] + [g[2] for g in corp_glyphs]
+    tops = [g[1] for g in helal + corp]
+    bots = [g[2] for g in helal + corp]
     top, bot = min(tops), max(bots)
-
-    width = (
-        m_img.width
-        + gap_letter_dot
-        + p_img.width
-        + gap_letter_dot
-        + h_img.width
-        + gap_mh_line
-        + hair_w
-        + gap_line_corp
-        + corp_w
+    run_w = (
+        sum(g[0].width for g in helal)
+        + tracking * (len(helal) - 1)
+        + word_gap
+        + sum(g[0].width for g in corp)
+        + tracking * (len(corp) - 1)
     )
-    height = bot - top
-    pad = int(round(size * 0.55))
-    canvas = Image.new("RGBA", (int(width) + pad * 2 + 8, int(height) + pad * 2 + 8), (0, 0, 0, 0))
-
+    pad = int(round(size * 0.06))
+    canvas = Image.new(
+        "RGBA",
+        (int(math.ceil(run_w)) + pad * 2 + 4, int(math.ceil(bot - top)) + pad * 2 + 4),
+        (0, 0, 0, 0),
+    )
     origin_y = pad - top
     x = float(pad)
 
-    paste(canvas, m_img, x, origin_y + m_top)
-    x += m_img.width + gap_letter_dot
-    paste(canvas, p_img, x, origin_y + p_top - period_lift)
-    x += p_img.width + gap_letter_dot
-    paste(canvas, h_img, x, origin_y + h_top)
-    x += h_img.width + gap_mh_line
+    def paint(glyphs):
+        nonlocal x
+        for i, (g_img, g_top, _g_bot) in enumerate(glyphs):
+            paste(canvas, g_img, x, origin_y + g_top)
+            x += g_img.width
+            if i < len(glyphs) - 1:
+                x += tracking
 
-    hair_x = int(round(x))
-    hair_y = int(round(origin_y + cap_top + (cap_h - hair_h) / 2.0))
-    draw = ImageDraw.Draw(canvas)
-    draw.rectangle(
-        [hair_x, hair_y, hair_x + hair_w - 1, hair_y + int(round(hair_h)) - 1],
-        fill=hairline_fill,
-    )
-    x += hair_w + gap_line_corp
-
-    for i, (g_img, g_top, _g_bot) in enumerate(corp_glyphs):
-        paste(canvas, g_img, x, origin_y + g_top)
-        x += g_img.width
-        if i < len(corp_glyphs) - 1:
-            x += corp_tracking
-
-    # Generous side padding, tighter vertical so CSS height maps to the letters.
-    return crop_pad(canvas, pad_x=int(round(size * 0.20)), pad_y=int(round(size * 0.055)))
+    paint(helal)
+    x += word_gap
+    paint(corp)
+    bbox = canvas.getbbox()
+    return canvas.crop(bbox) if bbox else canvas
 
 
-def compose_mark(*, size: int = 1024) -> Image.Image:
-    """Square M.H mark for favicon — same letters, not a second competing seal."""
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    inset = int(round(size * 0.06))
-    box = [inset, inset, size - inset - 1, size - inset - 1]
-    radius = int(round(size * 0.18))
-    draw.rounded_rectangle(box, radius=radius, fill=NAVY)
-
-    font_size = size * 0.34
-    font = serif_font(font_size)
-    m_img, m_top, m_bot = glyph("M", font, GOLD)
-    p_img, p_top, p_bot = glyph(".", font, GOLD)
-    h_img, h_top, h_bot = glyph("H", font, GOLD)
-    gap = font_size * 0.04
-    lift = font_size * 0.05
-    run_w = m_img.width + gap + p_img.width + gap + h_img.width
-    cap_top = min(m_top, h_top)
-    cap_bot = max(m_bot, h_bot)
-    x0 = (size - run_w) / 2.0
-    # Optical center: serif caps sit slightly heavy at the bottom.
-    y_base = (size / 2.0) - (cap_top + cap_bot) / 2.0 - size * 0.012
-
-    paste(img, m_img, x0, y_base + m_top)
-    x0 += m_img.width + gap
-    paste(img, p_img, x0, y_base + p_top - lift)
-    x0 += p_img.width + gap
-    paste(img, h_img, x0, y_base + h_top)
-    return img
+def paint_pil(ctx: cairo.Context, img: Image.Image, x: float, y: float) -> None:
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    surf = cairo.ImageSurface.create_from_png(buf)
+    ctx.save()
+    ctx.set_source_surface(surf, x, y)
+    ctx.paint()
+    ctx.restore()
 
 
-def make_header() -> Image.Image:
-    surf = compose_wordmark(NAVY, GOLD, GOLD, size=220)
+def set_rgb(ctx: cairo.Context, rgb) -> None:
+    ctx.set_source_rgb(*rgb)
+
+
+def rounded_rect(ctx: cairo.Context, x: float, y: float, w: float, h: float, r: float) -> None:
+    r = min(max(0.0, r), w / 2.0, h / 2.0)
+    ctx.new_path()
+    ctx.move_to(x + r, y)
+    ctx.line_to(x + w - r, y)
+    ctx.arc(x + w - r, y + r, r, -math.pi / 2, 0)
+    ctx.line_to(x + w, y + h - r)
+    ctx.arc(x + w - r, y + h - r, r, 0, math.pi / 2)
+    ctx.line_to(x + r, y + h)
+    ctx.arc(x + r, y + h - r, r, math.pi / 2, math.pi)
+    ctx.line_to(x, y + r)
+    ctx.arc(x + r, y + r, r, math.pi, 3 * math.pi / 2)
+    ctx.close_path()
+
+
+def apply_font_options(ctx: cairo.Context) -> None:
+    """No hinting — keeps M stems straight instead of bowing into a crescent."""
+    opts = cairo.FontOptions()
+    opts.set_antialias(cairo.ANTIALIAS_BEST)
+    opts.set_hint_style(cairo.HINT_STYLE_NONE)
+    opts.set_hint_metrics(cairo.HINT_METRICS_OFF)
+    ctx.set_font_options(opts)
+
+
+def fill_rect(ctx: cairo.Context, x: float, y: float, w: float, h: float) -> None:
+    ctx.rectangle(x, y, w, h)
+    ctx.fill()
+
+
+def thick_segment(ctx: cairo.Context, x1: float, y1: float, x2: float, y2: float, width: float) -> None:
+    dx, dy = x2 - x1, y2 - y1
+    length = math.hypot(dx, dy) or 1.0
+    nx, ny = (-dy / length) * (width / 2.0), (dx / length) * (width / 2.0)
+    ctx.new_path()
+    ctx.move_to(x1 + nx, y1 + ny)
+    ctx.line_to(x2 + nx, y2 + ny)
+    ctx.line_to(x2 - nx, y2 - ny)
+    ctx.line_to(x1 - nx, y1 - ny)
+    ctx.close_path()
+    ctx.fill()
+
+
+def draw_mh_letters(ctx: cairo.Context, cx: float, cy: float, letter_h: float, ink) -> None:
+    """
+    Classical MH: vertical rectangular stems, straight V, slab serifs.
+    Outer edges of M are vertical — it cannot read as a crescent or half-moon.
+    """
+    sw = letter_h * 0.128
+    st = sw * 0.40
+    ser = sw * 0.72
+    m_w = letter_h * 1.06
+    h_w = letter_h * 0.82
+    gap = letter_h * 0.42
+    total = m_w + gap + h_w
+    x0 = cx - total / 2.0
+    y0 = cy - letter_h / 2.0
+
+    set_rgb(ctx, ink)
+
+    def stem(x: float) -> None:
+        fill_rect(ctx, x, y0, sw, letter_h)
+
+    def serifs(x: float, top_l: bool, top_r: bool, bot_l: bool, bot_r: bool) -> None:
+        tw = sw + (ser if top_l else 0.0) + (ser if top_r else 0.0)
+        tx = x - (ser if top_l else 0.0)
+        fill_rect(ctx, tx, y0, tw, st)
+        bw = sw + (ser if bot_l else 0.0) + (ser if bot_r else 0.0)
+        bx = x - (ser if bot_l else 0.0)
+        fill_rect(ctx, bx, y0 + letter_h - st, bw, st)
+
+    ml = x0
+    mr = x0 + m_w - sw
+    stem(ml)
+    stem(mr)
+    serifs(ml, True, False, True, True)
+    serifs(mr, False, True, True, True)
+    mid_x = x0 + m_w / 2.0
+    valley_y = y0 + letter_h * 0.74
+    thick_segment(ctx, ml + sw, y0 + st * 0.2, mid_x, valley_y, sw)
+    thick_segment(ctx, mr, y0 + st * 0.2, mid_x, valley_y, sw)
+
+    hx = x0 + m_w + gap
+    hl = hx
+    hr = hx + h_w - sw
+    stem(hl)
+    stem(hr)
+    serifs(hl, True, True, True, True)
+    serifs(hr, True, True, True, True)
+    bar_h = sw * 0.92
+    bar_y = y0 + letter_h * 0.48 - bar_h / 2.0
+    fill_rect(ctx, hl + sw - 0.4, bar_y, (hr - hl - sw) + 0.8, bar_h)
+
+
+def draw_monogram(ctx: cairo.Context, cx: float, cy: float, s: float, ink) -> None:
+    letter_h = s * 0.31
+    draw_mh_letters(ctx, cx, cy - s * 0.008, letter_h, ink)
+
+
+def draw_badge(ctx: cairo.Context, x: float, y: float, s: float, fill, ring, ink, filled: bool) -> None:
+    """Navy rounded-square seal with gold inner border and gold MH."""
+    ctx.save()
+    corner = s * 0.16
+    ring_w = max(2.4, s * 0.038)
+    if filled and fill is not None:
+        set_rgb(ctx, fill)
+        rounded_rect(ctx, x, y, s, s, corner)
+        ctx.fill()
+
+    set_rgb(ctx, ring)
+    ctx.set_line_width(ring_w)
+    ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+    inset = ring_w * 0.5 + s * 0.042
+    inner_r = max(4.0, corner - inset * 0.55)
+    rounded_rect(ctx, x + inset, y + inset, s - 2 * inset, s - 2 * inset, inner_r)
+    ctx.stroke()
+
+    draw_monogram(ctx, x + s * 0.50, y + s * 0.505, s, ink)
+    ctx.restore()
+
+
+def render_surface(w: int, h: int) -> cairo.ImageSurface:
+    return cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
+
+
+def crop_alpha(surf: cairo.ImageSurface, pad_x: int = 16, pad_y: int = 8, square: bool = False) -> cairo.ImageSurface:
+    surf.flush()
+    w, h = surf.get_width(), surf.get_height()
+    buf = surf.get_data()
+    stride = surf.get_stride()
+    minx, miny, maxx, maxy = w, h, 0, 0
+    found = False
+    for y in range(h):
+        row = y * stride
+        for x in range(w):
+            a = buf[row + x * 4 + 3]
+            if a > 12:
+                found = True
+                if x < minx:
+                    minx = x
+                if y < miny:
+                    miny = y
+                if x > maxx:
+                    maxx = x
+                if y > maxy:
+                    maxy = y
+    if not found:
+        return surf
+    minx = max(0, minx - pad_x)
+    miny = max(0, miny - pad_y)
+    maxx = min(w - 1, maxx + pad_x)
+    maxy = min(h - 1, maxy + pad_y)
+    if square:
+        side = max(maxx - minx + 1, maxy - miny + 1)
+        cx = (minx + maxx) // 2
+        cy = (miny + maxy) // 2
+        minx = max(0, cx - side // 2)
+        miny = max(0, cy - side // 2)
+        maxx = min(w - 1, minx + side - 1)
+        maxy = min(h - 1, miny + side - 1)
+        minx = max(0, maxx - side + 1)
+        miny = max(0, maxy - side + 1)
+    cw, ch = maxx - minx + 1, maxy - miny + 1
+    out = cairo.ImageSurface(cairo.FORMAT_ARGB32, cw, ch)
+    ctx = cairo.Context(out)
+    ctx.set_source_surface(surf, -minx, -miny)
+    ctx.paint()
+    return out
+
+
+def save(surf: cairo.ImageSurface, path: str, crop: bool = True, square: bool = False) -> cairo.ImageSurface:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if crop:
+        surf = crop_alpha(surf, square=square)
+    surf.write_to_png(path)
+    print("wrote", path, surf.get_width(), "x", surf.get_height())
+    return surf
+
+
+def make_lockup(fill, ring, ink, helal_color, corp_color, filled: bool) -> cairo.ImageSurface:
+    w, h = 2800, 720
+    surf = render_surface(w, h)
+    ctx = cairo.Context(surf)
+    ctx.set_antialias(cairo.ANTIALIAS_BEST)
+    apply_font_options(ctx)
+
+    # Badge-led lockup: CSS height 40px / max-width 240px → aspect must stay ≤ 6.
+    mark = 240.0
+    line = compose_wordmark(rgb_to_rgba(helal_color), rgb_to_rgba(corp_color), size=mark * 0.68)
+    block_h = float(line.height)
+    gap = mark * 0.14
+    mx = 48.0
+    my = (h - mark) / 2.0
+    draw_badge(ctx, mx, my, mark, fill, ring, ink, filled)
+    word_y = my + (mark - block_h) / 2.0
+    paint_pil(ctx, line, mx + mark + gap, word_y)
+    return surf
+
+
+def make_header() -> cairo.ImageSurface:
+    surf = make_lockup(NAVY, GOLD, GOLD, NAVY, GOLD, True)
     save(surf, os.path.join(IMG, "logo.png"))
     save(surf, os.path.join(IMG, "logo-header.png"))
-    save(surf, os.path.join(SHOT, "00-logo.png"))
-    return surf
+    return save(surf, os.path.join(SHOT, "00-logo.png"))
 
 
-def make_footer() -> Image.Image:
-    surf = compose_wordmark(WHITE, GOLD, GOLD, size=220)
+def make_footer() -> cairo.ImageSurface:
+    # Same MH badge as the header; wordmark inverts to white + gold for the navy footer.
+    surf = make_lockup(NAVY, GOLD, GOLD, WHITE, GOLD, True)
     save(surf, os.path.join(IMG, "logo-white.png"))
-    save(surf, os.path.join(SHOT, "00-logo-white.png"))
-    return surf
+    return save(surf, os.path.join(SHOT, "00-logo-white.png"))
 
 
-def make_mark() -> Image.Image:
-    surf = compose_mark(size=1024)
-    save(surf, os.path.join(IMG, "logo-mark.png"))
-    save(surf, os.path.join(SHOT, "00-logo-mark.png"))
-    return surf
+def make_mark() -> cairo.ImageSurface:
+    s = 1024
+    surf = render_surface(s, s)
+    ctx = cairo.Context(surf)
+    ctx.set_antialias(cairo.ANTIALIAS_BEST)
+    apply_font_options(ctx)
+    pad = 36
+    draw_badge(ctx, pad, pad, s - 2 * pad, NAVY, GOLD, GOLD, True)
+    save(surf, os.path.join(IMG, "logo-mark.png"), square=True)
+    return save(surf, os.path.join(SHOT, "00-logo-mark.png"), square=True)
 
 
 if __name__ == "__main__":
     header = make_header()
     make_footer()
     make_mark()
-    display_h = 56
-    display_w = round(header.width * display_h / header.height)
+    display_h = 40
+    display_w = round(header.get_width() * display_h / header.get_height())
     print(f"header display attrs: width={display_w} height={display_h}")
+    print(f"aspect width/height={header.get_width() / header.get_height():.3f} (css max 240/40=6.0)")

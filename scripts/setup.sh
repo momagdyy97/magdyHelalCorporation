@@ -4,10 +4,11 @@ set -eu
 
 cd /var/www/html
 
-WP_URL="${WP_URL:-https://magdyhelalcorp.infinityfree.io}"
+WP_URL="${WP_URL:-https://helal.co}"
+WP_URL="${WP_URL%/}"
 WP_ADMIN_USER="${WP_ADMIN_USER:-admin}"
 WP_ADMIN_PASSWORD="${WP_ADMIN_PASSWORD:-changeme}"
-WP_ADMIN_EMAIL="${WP_ADMIN_EMAIL:-momagdyy97@gmail.com}"
+WP_ADMIN_EMAIL="${WP_ADMIN_EMAIL:-info@helal.co}"
 
 echo "Waiting for WordPress files..."
 for i in $(seq 1 90); do
@@ -41,6 +42,8 @@ wp rewrite structure '/%postname%/' --hard
 wp option update blogname "مكتب مجدي هلال — M.H CORP"
 wp option update blogdescription "magdyhelalCORP — محاسبة · ضرائب · مراجعة"
 wp option update admin_email "${WP_ADMIN_EMAIL}" || true
+wp option delete new_admin_email || true
+wp user update "${WP_ADMIN_USER}" --user_email="${WP_ADMIN_EMAIL}" --skip-email || true
 wp option update timezone_string "Africa/Cairo"
 wp option update date_format "j F Y"
 wp option update WPLANG "ar"

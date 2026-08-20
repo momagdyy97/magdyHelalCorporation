@@ -175,6 +175,16 @@ img {
   margin-left: 18px;
 }
 
+.mha-top-phone a,
+.mha-footer-meta a[href^="tel:"],
+.mha-contact-phones a {
+  color: inherit;
+}
+
+.mha-top-phone a:hover {
+  color: var(--mha-gold);
+}
+
 .mha-header {
   background: #fff;
   box-shadow: 0 1px 0 var(--mha-line);
@@ -1406,6 +1416,13 @@ a.mha-contact-fact:hover {
   font-size: 14px;
 }
 
+.mha-contact-phones {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
 .mha-phone,
 bdi.mha-phone {
   unicode-bidi: isolate;
@@ -1670,7 +1687,7 @@ bdi.mha-phone {
   .mha-brand-logo,
   .mha-brand .custom-logo {
     height: 32px;
-    max-width: min(168px, calc(100vw - 88px));
+    max-width: min(176px, calc(100vw - 88px));
   }
 
   .mha-hero-actions {

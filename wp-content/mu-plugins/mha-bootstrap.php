@@ -9,10 +9,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strpos((string) $_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false) {
+    $_SERVER['HTTPS'] = 'on';
+}
+
 /*
- * Redis is optional. InfinityFree shared hosting has no Redis service.
+ * Redis is optional. Hosts without a Redis service skip it.
  * Docker compose sets WP_REDIS_HOST in WORDPRESS_CONFIG_EXTRA.
- * Do not default the hostname to "redis" — that would break shared hosts.
+ * Do not default the hostname to "redis" — that would break hosts without Redis.
  */
 if (!defined('WP_REDIS_HOST')) {
     $mha_redis = getenv('WP_REDIS_HOST');
@@ -43,8 +47,7 @@ add_filter('is_email', static function ($is_email, $email) {
         return $is_email;
     }
     $allow = [
-        'momagdyy97@gmail.com',
-        'magdy.hilal@co',
+        'info@helal.co',
     ];
     foreach ($allow as $ok) {
         if (strcasecmp($email, $ok) === 0) {

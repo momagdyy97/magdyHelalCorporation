@@ -23,9 +23,9 @@ function mha_customize_register($wp_customize)
 
     $fields = [
         'mha_hours'     => ['ساعات العمل', mha_defaults()['hours']],
-        'mha_phone'     => ['الهاتف (+201000354045)', mha_defaults()['phone']],
-        'mha_phone_alt' => ['هاتف إضافي', mha_defaults()['phone_alt']],
-        'mha_whatsapp'  => ['واتساب (دولي بدون +)', mha_defaults()['whatsapp']],
+        'mha_phone'     => ['الهاتف (+0224051171)', mha_defaults()['phone']],
+        'mha_phone_2'   => ['هاتف إضافي (+0224051169)', mha_defaults()['phone_2']],
+        'mha_whatsapp'  => ['واتساب (جوال دولي بدون + — اتركه فارغاً إن لم يتوفر)', mha_defaults()['whatsapp']],
         'mha_email'     => ['البريد', mha_defaults()['email']],
         'mha_address'   => ['العنوان', mha_defaults()['address']],
     ];

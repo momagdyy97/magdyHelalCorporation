@@ -12,15 +12,19 @@
             <p>الاسم، البريد، والرسالة — نرد من المكتب في مدينة نصر.</p>
         </div>
         <div class="mha-contact-facts">
-            <a class="mha-contact-fact" href="<?php echo esc_url(mha_tel_href()); ?>">
+            <div class="mha-contact-fact">
                 <?php echo mha_icon('phone'); ?>
                 <strong>الهاتف</strong>
-                <span><?php echo mha_phone_html(); ?></span>
-            </a>
-            <a class="mha-contact-fact" href="mailto:<?php echo esc_attr(mha_mod('mha_email', mha_defaults()['email'])); ?>">
+                <span class="mha-contact-phones">
+                    <?php foreach (mha_office_phones() as $raw) : ?>
+                        <?php echo mha_phone_anchor($raw); ?>
+                    <?php endforeach; ?>
+                </span>
+            </div>
+            <a class="mha-contact-fact" href="mailto:<?php echo esc_attr(mha_public_email()); ?>">
                 <?php echo mha_icon('mail'); ?>
                 <strong>البريد</strong>
-                <span dir="ltr"><?php echo esc_html(mha_mod('mha_email', mha_defaults()['email'])); ?></span>
+                <span dir="ltr"><?php echo esc_html(mha_public_email()); ?></span>
             </a>
             <div class="mha-contact-fact">
                 <?php echo mha_icon('pin'); ?>

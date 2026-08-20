@@ -1,5 +1,6 @@
-# Published image + MySQL + Redis (VPS / Docker Hub path).
+# Published image + MySQL + Redis (Docker Hub path).
 # Public WordPress URL comes from WP_HOME / WP_SITEURL in .env — not from the container port.
+# Default public URL: https://helal.co (no trailing slash).
 #
 #   cp .env.example .env   # fill password placeholders
 #   docker compose -f docker-compose.prod.yml up -d
@@ -48,16 +49,19 @@ services:
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-changeme}
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-magdi_hilal}
       WORDPRESS_TABLE_PREFIX: mha_
-      WP_HOME: ${WP_HOME:-https://magdyhelalcorp.infinityfree.io}
-      WP_SITEURL: ${WP_SITEURL:-https://magdyhelalcorp.infinityfree.io}
-      WP_URL: ${WP_URL:-https://magdyhelalcorp.infinityfree.io}
-      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-momagdyy97@gmail.com}
+      WP_HOME: ${WP_HOME:-https://helal.co}
+      WP_SITEURL: ${WP_SITEURL:-https://helal.co}
+      WP_URL: ${WP_URL:-https://helal.co}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-info@helal.co}
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_REDIS_HOST', 'redis');
         define('WP_REDIS_PORT', 6379);
         define('WP_REDIS_PREFIX', 'mha:');
-        define('WP_HOME', getenv('WP_HOME') ?: 'https://magdyhelalcorp.infinityfree.io');
-        define('WP_SITEURL', getenv('WP_SITEURL') ?: 'https://magdyhelalcorp.infinityfree.io');
+        define('WP_HOME', '${WP_HOME:-https://helal.co}');
+        define('WP_SITEURL', '${WP_SITEURL:-https://helal.co}');
+        if (!empty($$_SERVER['HTTP_X_FORWARDED_PROTO']) && strpos($$_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false) {
+            $$_SERVER['HTTPS'] = 'on';
+        }
         define('FS_METHOD', 'direct');
         define('MYSQL_CLIENT_FLAGS', 0);
     volumes:

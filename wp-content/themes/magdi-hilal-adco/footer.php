@@ -12,7 +12,7 @@
         <div class="row">
             <div class="col-lg-4 mb-4 mb-lg-0 mha-footer-col">
                 <div class="mha-footer-brand">
-                    <img src="<?php echo esc_url(mha_img('logo-white.png')); ?>" alt="M.H CORP" class="mha-footer-logo" width="220" height="40">
+                    <img src="<?php echo esc_url(mha_img('logo-white.png')); ?>" alt="HELAL CORP — مكتب مجدي هلال" class="mha-footer-logo" width="215" height="40">
                     <p>مكتب محاسبة ومراجعة واستشارات ضريبية في مدينة نصر، بقيادة المحاسب القانوني والمستشار الضريبي مجدي هلال وفريق يضم نحو 20 إلى 30 محاسباً.</p>
                     <p class="mha-footer-meta">
                         <?php echo mha_icon('pin'); ?>
@@ -20,13 +20,7 @@
                     </p>
                     <p class="mha-footer-meta">
                         <?php echo mha_icon('phone'); ?>
-                        <a href="<?php echo esc_url(mha_tel_href()); ?>" dir="ltr"><?php echo mha_phone_html(); ?></a>
-                        <?php if (mha_mod('mha_phone_alt', mha_defaults()['phone_alt'])) : ?>
-                            <span> · </span>
-                            <a href="<?php echo esc_url(mha_tel_href(mha_mod('mha_phone_alt', mha_defaults()['phone_alt']))); ?>" dir="ltr">
-                                <bdi class="mha-phone" dir="ltr"><?php echo esc_html(mha_phone_display(mha_mod('mha_phone_alt', mha_defaults()['phone_alt']))); ?></bdi>
-                            </a>
-                        <?php endif; ?>
+                        <?php echo mha_phones_inline(); ?>
                     </p>
                 </div>
             </div>
@@ -62,9 +56,11 @@
 </footer>
 
 <div class="mha-float">
+    <?php if (mha_whatsapp_link()) : ?>
     <a class="mha-float-btn mha-float-wa" href="<?php echo esc_url(mha_whatsapp_link()); ?>" target="_blank" rel="noopener" aria-label="واتساب">
         <?php echo mha_icon('whatsapp'); ?>
     </a>
+    <?php endif; ?>
     <button type="button" class="mha-float-btn mha-float-chat" id="mhaChatToggle" aria-label="مستشار M.H CORP" aria-expanded="false" aria-controls="mhaChatPanel">
         <?php echo mha_icon('chat'); ?>
     </button>

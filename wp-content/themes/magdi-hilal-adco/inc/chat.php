@@ -15,7 +15,7 @@ if (function_exists('mb_internal_encoding')) {
     mb_internal_encoding('UTF-8');
 }
 
-define('MHA_CHAT_DB_VERSION', 3);
+define('MHA_CHAT_DB_VERSION', 6);
 define('MHA_CHAT_MAX_LEN', 1000);
 define('MHA_CHAT_RATE', 20);
 
@@ -132,9 +132,23 @@ function mha_chat_purge_dev_hosts_from_knowledge()
         'https://localhost',
         'http://magdy.modevops.fun',
         'https://magdy.modevops.fun',
+        'http://magdyhelal.modevops.fun',
+        'https://magdyhelal.modevops.fun',
+        'http://www.helal.co',
+        'https://www.helal.co',
+        'http://magdyhelalcorp.infinityfree.io',
+        'https://magdyhelalcorp.infinityfree.io',
         'localhost:8088',
         '127.0.0.1:8088',
         'magdy.modevops.fun',
+        'magdyhelal.modevops.fun',
+        'www.helal.co',
+        'magdyhelalcorp.infinityfree.io',
+        '+201000354045',
+        '201000354045',
+        '01000354045',
+        'magdy.hilal@co',
+        'momagdyy97@gmail.com',
     ];
     foreach ($fields as $field) {
         foreach ($froms as $from) {
@@ -164,9 +178,9 @@ function mha_chat_knowledge_corpus()
         [
             'slug'   => 'contact-hours',
             'title'  => 'بيانات التواصل وساعات العمل',
-            'tags'   => 'تواصل هاتف بريد عنوان واتساب ساعات contact phone email address whatsapp hours quote موعد اتصال /contact/',
+            'tags'   => 'تواصل هاتف بريد عنوان ساعات contact phone email address hours quote موعد اتصال /contact/',
             'source' => 'موقع M.H CORP',
-            'body'   => 'للتواصل مع مكتب مجدي هلال — M.H CORP: الهاتف {{phone}} (يُكتب من اليسار لليمين)، البريد {{email}}، العنوان {{address}}. ساعات العمل {{hours}}. يمكن طلب استشارة من صفحة «تواصل معنا» أو عبر واتساب على الرقم نفسه. لا يوجد حساب فيسبوك للمكتب على هذا الموقع.',
+            'body'   => 'للتواصل مع مكتب مجدي هلال — M.H CORP: الهاتف {{phone}} (يُكتب من اليسار لليمين)، البريد {{email}}، العنوان {{address}}. ساعات العمل {{hours}}. يمكن طلب استشارة من صفحة «تواصل معنا». لا يوجد واتساب على أرقام المكتب الأرضية، ولا يوجد حساب فيسبوك للمكتب على هذا الموقع.',
         ],
         [
             'slug'   => 'income-tax-91-2005',
@@ -278,9 +292,28 @@ function mha_chat_page_url($slug)
     return home_url('/' . $slug . '/');
 }
 
+function mha_chat_canonical_host()
+{
+    return 'helal.co';
+}
+
 function mha_chat_public_origin()
 {
-    return untrailingslashit(home_url());
+    $origin = untrailingslashit(home_url());
+    $host   = strtolower((string) wp_parse_url($origin, PHP_URL_HOST));
+    $leftover = [
+        '',
+        'localhost',
+        '127.0.0.1',
+        'www.helal.co',
+        'magdy.modevops.fun',
+        'magdyhelal.modevops.fun',
+        'magdyhelalcorp.infinityfree.io',
+    ];
+    if (in_array($host, $leftover, true)) {
+        return 'https://' . mha_chat_canonical_host();
+    }
+    return $origin;
 }
 
 function mha_chat_rewrite_dev_hosts($text)
@@ -293,20 +326,19 @@ function mha_chat_rewrite_dev_hosts($text)
             '#https?://127\.0\.0\.1:8088#i',
             '#https?://localhost(?!:)#i',
             '#https?://127\.0\.0\.1(?!:)#i',
+            '#https?://www\.helal\.co#i',
+            '#https?://magdyhelal\.modevops\.fun#i',
             '#https?://magdy\.modevops\.fun#i',
+            '#https?://magdyhelalcorp\.infinityfree\.io#i',
         ],
         $origin,
         $text
     );
     $bare = preg_replace('#^https?://#i', '', $origin);
-    if (strcasecmp($bare, 'localhost:8088') !== 0) {
-        $text = str_ireplace('localhost:8088', $bare, $text);
-    }
-    if (strcasecmp($bare, '127.0.0.1:8088') !== 0) {
-        $text = str_ireplace('127.0.0.1:8088', $bare, $text);
-    }
-    if (strcasecmp($bare, 'magdy.modevops.fun') !== 0) {
-        $text = str_ireplace('magdy.modevops.fun', $bare, $text);
+    foreach (['localhost:8088', '127.0.0.1:8088', 'www.helal.co', 'magdyhelal.modevops.fun', 'magdy.modevops.fun', 'magdyhelalcorp.infinityfree.io'] as $old) {
+        if (strcasecmp($bare, $old) !== 0) {
+            $text = str_ireplace($old, $bare, $text);
+        }
     }
     return $text;
 }
@@ -324,8 +356,8 @@ function mha_chat_expand_facts($text)
         '{{url:news}}'     => mha_chat_page_url('news'),
         '{{url:contact}}'  => mha_chat_page_url('contact'),
         '{{url:quote}}'    => mha_chat_page_url('contact'),
-        '{{phone}}'        => mha_phone_display(),
-        '{{email}}'        => mha_mod('mha_email', $d['email']),
+        '{{phone}}'        => mha_phones_display(' — '),
+        '{{email}}'        => mha_public_email(),
         '{{address}}'      => mha_mod('mha_address', $d['address']),
         '{{hours}}'        => mha_mod('mha_hours', $d['hours']),
         '{{firm}}'         => $d['firm'],
@@ -337,12 +369,15 @@ function mha_chat_scrub_reply($text)
 {
     $text = mha_chat_expand_facts($text);
     $text = mha_chat_rewrite_dev_hosts($text);
-    $text = preg_replace('#\[([^\]]+)\]\(\s*https?://(?:localhost|127\.0\.0\.1|magdy\.modevops\.fun)(?::\d+)?[^)]*\)#i', '$1', $text);
-    $text = preg_replace('#https?://(?:localhost|127\.0\.0\.1|magdy\.modevops\.fun)(?::\d+)?#i', '', $text);
+    $old_hosts = 'localhost|127\.0\.0\.1|www\.helal\.co|magdyhelal\.modevops\.fun|magdy\.modevops\.fun|magdyhelalcorp\.infinityfree\.io';
+    $text = preg_replace('#\[([^\]]+)\]\(\s*https?://(?:' . $old_hosts . ')(?::\d+)?[^)]*\)#i', '$1', $text);
+    $text = preg_replace('#https?://(?:' . $old_hosts . ')(?::\d+)?#i', '', $text);
     $text = preg_replace('#\b(?:localhost|127\.0\.0\.1):\d+\b#i', '', $text);
     $text = preg_replace('#\b(?:localhost|127\.0\.0\.1)\b#i', '', $text);
-    $text = preg_replace('#\bmagdy\.modevops\.fun\b#i', '', $text);
+    $text = preg_replace('#\b(?:www\.helal\.co|magdyhelal\.modevops\.fun|magdy\.modevops\.fun|magdyhelalcorp\.infinityfree\.io)\b#i', '', $text);
     $text = preg_replace('/:8088\b/', '', $text);
+    $text = str_ireplace(['magdy.hilal@co', 'momagdyy97@gmail.com'], mha_public_email(), $text);
+    $text = str_replace(['+201000354045', '201000354045', '01000354045', '0100 035 045'], '', $text);
     $text = preg_replace('/:\s*(?=\n|$)/u', '', $text);
     $text = preg_replace('/[ \t]{2,}/u', ' ', $text);
     return trim((string) $text);
@@ -613,7 +648,6 @@ function mha_chat_links_for($agent, array $chunks, $message = '')
 
 function mha_chat_english_line($agent)
 {
-    $d = mha_defaults();
     switch ($agent) {
         case 'tax':
             return 'In short: we can review your ETA e-invoice/VAT file at the office — this chat is general information, not licensed advice.';
@@ -626,8 +660,8 @@ function mha_chat_english_line($agent)
         default:
             return sprintf(
                 'You can reach M.H CORP on %s or %s — Nasr City, Cairo.',
-                mha_phone_display(),
-                mha_mod('mha_email', $d['email'])
+                mha_phones_display(' and '),
+                mha_public_email()
             );
     }
 }
@@ -653,8 +687,8 @@ function mha_chat_compose($agent, $message, array $chunks, $lang)
         $parts[] = 'أهلاً بكم في مستشار مكتب مجدي هلال — M.H CORP. يمكن السؤال عن الضرائب، المراجعة، الفاتورة الإلكترونية، أو خدمات المكتب.';
         $parts[] = sprintf(
             'للتواصل المباشر: %s — %s — %s. ساعات العمل: %s.',
-            mha_phone_display(),
-            mha_mod('mha_email', $d['email']),
+            mha_phones_display(' و '),
+            mha_public_email(),
             mha_mod('mha_address', $d['address']),
             mha_mod('mha_hours', $d['hours'])
         );
@@ -668,8 +702,8 @@ function mha_chat_compose($agent, $message, array $chunks, $lang)
         $parts[] = 'يسعد مكتب مجدي هلال — M.H CORP استقبال استفساركم.';
         $parts[] = sprintf(
             'الهاتف: %s — البريد: %s — العنوان: %s. ساعات العمل: %s. يمكنكم الكتابة من صفحة «تواصل معنا».',
-            mha_phone_display(),
-            mha_mod('mha_email', $d['email']),
+            mha_phones_display(' و '),
+            mha_public_email(),
             mha_mod('mha_address', $d['address']),
             mha_mod('mha_hours', $d['hours'])
         );
@@ -713,8 +747,8 @@ function mha_chat_compose($agent, $message, array $chunks, $lang)
         $parts[] = sprintf(
             'العنوان: %s. الهاتف: %s. البريد: %s. ساعات العمل: %s.',
             mha_mod('mha_address', $d['address']),
-            mha_phone_display(),
-            mha_mod('mha_email', $d['email']),
+            mha_phones_display(' و '),
+            mha_public_email(),
             mha_mod('mha_hours', $d['hours'])
         );
     }
@@ -757,7 +791,12 @@ function mha_chat_openai_reply($message, array $chunks, $agent, $lang)
         $context .= '# ' . ($chunk['title'] ?? '') . "\n" . mha_chat_expand_facts($chunk['body'] ?? '') . "\n\n";
     }
 
-    $system = 'أنت مستشار مهني لمكتب مجدي هلال — M.H CORP في مدينة نصر، القاهرة. أجب بالعربية الفصحى المهنية أساساً. إذا كان سؤال المستخدم بالإنجليزية أضف سطراً إنجليزياً قصيراً في النهاية. لا تختلق مواد قانونية. اعتمد فقط على السياق المعطى وبيانات المكتب. أوضح أن الكلام معلومات عامة وليست استشارة قانونية مرخّصة. لا تذكر فيسبوك ولا إبراهيم هلال. لا تدرج روابط URL في نص الرد ولا تذكر localhost أو 127.0.0.1 أو modevops.fun أو أرقام المنافذ. اذكر أسماء الصفحات بالعربية فقط (من نحن، خدماتنا، تواصل معنا)؛ الأزرار تظهر منفصلة.';
+    $system = sprintf(
+        'أنت مستشار مهني لمكتب مجدي هلال — M.H CORP في مدينة نصر، القاهرة. أجب بالعربية الفصحى المهنية أساساً. إذا كان سؤال المستخدم بالإنجليزية أضف سطراً إنجليزياً قصيراً في النهاية. لا تختلق مواد قانونية. اعتمد فقط على السياق المعطى وبيانات المكتب. أوضح أن الكلام معلومات عامة وليست استشارة قانونية مرخّصة. لا تذكر فيسبوك ولا إبراهيم هلال. لا تدرج روابط URL في نص الرد ولا تذكر localhost أو 127.0.0.1 أو أرقام المنافذ. الموقع العام helal.co؛ الأزرار تُبنى من عنوان الموقع. اذكر أسماء الصفحات بالعربية فقط (من نحن، خدماتنا، تواصل معنا)؛ الأزرار تظهر منفصلة. بيانات التواصل: الهاتف %s — البريد %s — العنوان %s. لا تذكر واتساب ولا بريداً شخصياً على Gmail.',
+        mha_phones_display(' و '),
+        mha_public_email(),
+        mha_mod('mha_address', mha_defaults()['address'])
+    );
 
     $payload = [
         'model'       => 'gpt-4o-mini',
@@ -806,20 +845,25 @@ function mha_chat_rate_limited()
     return false;
 }
 
+function mha_chat_host_allowed($host)
+{
+    $host = strtolower((string) $host);
+    $home = strtolower((string) wp_parse_url(home_url(), PHP_URL_HOST));
+    $ok   = array_filter([$home, 'helal.co', 'www.helal.co']);
+    return $host !== '' && in_array($host, $ok, true);
+}
+
 function mha_chat_same_site()
 {
-    $home_host = strtolower((string) wp_parse_url(home_url(), PHP_URL_HOST));
-    $origin    = isset($_SERVER['HTTP_ORIGIN']) ? (string) $_SERVER['HTTP_ORIGIN'] : '';
+    $origin = isset($_SERVER['HTTP_ORIGIN']) ? (string) $_SERVER['HTTP_ORIGIN'] : '';
     if ($origin !== '') {
-        $oh = strtolower((string) wp_parse_url($origin, PHP_URL_HOST));
-        return $oh !== '' && $oh === $home_host;
+        return mha_chat_host_allowed(wp_parse_url($origin, PHP_URL_HOST));
     }
     $ref = isset($_SERVER['HTTP_REFERER']) ? (string) $_SERVER['HTTP_REFERER'] : '';
     if ($ref === '') {
         return true;
     }
-    $rh = strtolower((string) wp_parse_url($ref, PHP_URL_HOST));
-    return $rh !== '' && $rh === $home_host;
+    return mha_chat_host_allowed(wp_parse_url($ref, PHP_URL_HOST));
 }
 
 function mha_chat_get_session($token, $lang)

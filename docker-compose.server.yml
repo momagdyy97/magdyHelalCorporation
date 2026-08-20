@@ -1,14 +1,13 @@
-# VPS Docker behind a reverse proxy (nginx/Caddy). Not used on InfinityFree shared hosting.
+# VPS Docker behind nginx at /opt/magdyHelalCorporation.
 #
 # Binds Apache only on loopback: 127.0.0.1:8088 → container :80
-# Public URL is still WP_HOME from .env (default https://magdyhelalcorp.infinityfree.io).
+# Public URL is WP_HOME from .env (default https://helal.co).
 #
 #   cp .env.example .env   # fill password placeholders
 #   docker compose -f docker-compose.server.yml up -d
 #
-# An InfinityFree *.infinityfree.io subdomain does not point at your VPS unless you
-# control DNS for a custom domain. Setting WP_HOME to the InfinityFree host while
-# this stack runs on a VPS will not make that hostname resolve here.
+# Put nginx in front (X-Forwarded-Proto https) and issue a cert with
+# certbot -d helal.co -d www.helal.co. Canonical URL is https://helal.co. See HOSTING.md.
 
 services:
   db:
@@ -54,16 +53,19 @@ services:
       MHA_SYNC_THEME: "0"
       MHA_OPENAI_API_KEY: ${MHA_OPENAI_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      WP_HOME: ${WP_HOME:-https://magdyhelalcorp.infinityfree.io}
-      WP_SITEURL: ${WP_SITEURL:-https://magdyhelalcorp.infinityfree.io}
-      WP_URL: ${WP_URL:-https://magdyhelalcorp.infinityfree.io}
-      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-momagdyy97@gmail.com}
+      WP_HOME: ${WP_HOME:-https://helal.co}
+      WP_SITEURL: ${WP_SITEURL:-https://helal.co}
+      WP_URL: ${WP_URL:-https://helal.co}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-info@helal.co}
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_REDIS_HOST', 'redis');
         define('WP_REDIS_PORT', 6379);
         define('WP_REDIS_PREFIX', 'mha:');
-        define('WP_HOME', getenv('WP_HOME') ?: 'https://magdyhelalcorp.infinityfree.io');
-        define('WP_SITEURL', getenv('WP_SITEURL') ?: 'https://magdyhelalcorp.infinityfree.io');
+        define('WP_HOME', '${WP_HOME:-https://helal.co}');
+        define('WP_SITEURL', '${WP_SITEURL:-https://helal.co}');
+        if (!empty($$_SERVER['HTTP_X_FORWARDED_PROTO']) && strpos($$_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false) {
+            $$_SERVER['HTTPS'] = 'on';
+        }
         define('FS_METHOD', 'direct');
         define('MYSQL_CLIENT_FLAGS', 0);
     volumes:
@@ -89,12 +91,12 @@ services:
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-changeme}
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-magdi_hilal}
       WORDPRESS_TABLE_PREFIX: mha_
-      WP_URL: ${WP_URL:-https://magdyhelalcorp.infinityfree.io}
-      WP_HOME: ${WP_HOME:-https://magdyhelalcorp.infinityfree.io}
-      WP_SITEURL: ${WP_SITEURL:-https://magdyhelalcorp.infinityfree.io}
+      WP_URL: ${WP_URL:-https://helal.co}
+      WP_HOME: ${WP_HOME:-https://helal.co}
+      WP_SITEURL: ${WP_SITEURL:-https://helal.co}
       WP_ADMIN_USER: ${WP_ADMIN_USER:-admin}
       WP_ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD:-changeme}
-      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-momagdyy97@gmail.com}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-info@helal.co}
     depends_on:
       - wordpress
       - db

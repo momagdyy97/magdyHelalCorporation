@@ -1,4 +1,5 @@
-# Local Docker. Container listens on port 8088; WordPress public URL is WP_HOME.
+# Local Docker. Container bind port 8088; WordPress public URL is WP_HOME
+# (default https://helal.co — no trailing slash).
 # Copy .env.example → .env and replace password placeholders before first run.
 
 services:
@@ -45,16 +46,19 @@ services:
       MHA_SYNC_THEME: "0"
       MHA_OPENAI_API_KEY: ${MHA_OPENAI_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      WP_HOME: ${WP_HOME:-https://magdyhelalcorp.infinityfree.io}
-      WP_SITEURL: ${WP_SITEURL:-https://magdyhelalcorp.infinityfree.io}
-      WP_URL: ${WP_URL:-https://magdyhelalcorp.infinityfree.io}
-      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-momagdyy97@gmail.com}
+      WP_HOME: ${WP_HOME:-https://helal.co}
+      WP_SITEURL: ${WP_SITEURL:-https://helal.co}
+      WP_URL: ${WP_URL:-https://helal.co}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-info@helal.co}
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_REDIS_HOST', 'redis');
         define('WP_REDIS_PORT', 6379);
         define('WP_REDIS_PREFIX', 'mha:');
-        define('WP_HOME', getenv('WP_HOME') ?: 'https://magdyhelalcorp.infinityfree.io');
-        define('WP_SITEURL', getenv('WP_SITEURL') ?: 'https://magdyhelalcorp.infinityfree.io');
+        define('WP_HOME', '${WP_HOME:-https://helal.co}');
+        define('WP_SITEURL', '${WP_SITEURL:-https://helal.co}');
+        if (!empty($$_SERVER['HTTP_X_FORWARDED_PROTO']) && strpos($$_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false) {
+            $$_SERVER['HTTPS'] = 'on';
+        }
         define('FS_METHOD', 'direct');
         define('MYSQL_CLIENT_FLAGS', 0);
     volumes:
@@ -80,12 +84,12 @@ services:
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-changeme}
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-magdi_hilal}
       WORDPRESS_TABLE_PREFIX: mha_
-      WP_URL: ${WP_URL:-https://magdyhelalcorp.infinityfree.io}
-      WP_HOME: ${WP_HOME:-https://magdyhelalcorp.infinityfree.io}
-      WP_SITEURL: ${WP_SITEURL:-https://magdyhelalcorp.infinityfree.io}
+      WP_URL: ${WP_URL:-https://helal.co}
+      WP_HOME: ${WP_HOME:-https://helal.co}
+      WP_SITEURL: ${WP_SITEURL:-https://helal.co}
       WP_ADMIN_USER: ${WP_ADMIN_USER:-admin}
       WP_ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD:-changeme}
-      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-momagdyy97@gmail.com}
+      WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL:-info@helal.co}
     depends_on:
       - wordpress
       - db

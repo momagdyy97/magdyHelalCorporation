@@ -5,25 +5,27 @@
 الاسم الظاهر: **مكتب مجدي هلال — MAGDY HELAL CORP**  
 المدير: المحاسب القانوني والمستشار الضريبي **مجدي هلال**، مع فريق نحو 20–30 محاسباً.
 
-**الدومين:** [https://magdyhelalcorp.infinityfree.io](https://magdyhelalcorp.infinityfree.io)
+**الدومين:** [https://helal.co](https://helal.co) (`www.helal.co` يُحوَّل إلى الـ apex)
 
-هذا العنوان على **InfinityFree shared hosting** وليس Docker. خطوات الرفع والتشغيل: **[HOSTING.md](HOSTING.md)** (القسمان A و B).
+هذا العنوان على **VPS** عبر Docker + nginx. خطوات التشغيل: **[HOSTING.md](HOSTING.md)**.
 
 ## بيانات التواصل
 
 | | |
 | --- | --- |
-| البريد | `momagdyy97@gmail.com` |
-| الهاتف | `+201000354045` |
-| واتساب (دولي بدون +) | `201000354045` |
+| البريد | `info@helal.co` |
+| الهاتف | `+0224051171` · `+0224051169` (`tel:+20224051171` / `tel:+20224051169`) |
+| واتساب | مخفي حتى يتوفر رقم جوال (أرقام المكتب أرضية وليست على `wa.me`) |
 | العنوان | مدينة نصر، القاهرة |
+
+بريد الأدمن (`WP_ADMIN_EMAIL`) هو أيضاً `info@helal.co`.
 
 عدّلها لاحقاً من: **المظهر → تخصيص → مكتب مجدي هلال**
 
 ## المطلوب على جهازك (Docker محلي فقط)
 
 - Docker و Docker Compose
-- منفذ `8088` فارغ لربط الحاوية (ووردبريس العام يبقى `WP_HOME`)
+- منفذ `8088` فارغ لربط الحاوية فقط (ووردبريس العام يبقى `WP_HOME`)
 
 لا تحتاج تثبيت PHP أو MySQL أو ووردبريس يدوياً للتجربة المحلية.
 
@@ -32,18 +34,18 @@
 ```bash
 cp .env.example .env
 # املأ MYSQL_PASSWORD و MYSQL_ROOT_PASSWORD و WP_ADMIN_PASSWORD
-# اترك WP_HOME / WP_SITEURL / WP_URL = https://magdyhelalcorp.infinityfree.io
+# اترك WP_HOME / WP_SITEURL / WP_URL = https://helal.co
 
 docker compose up -d --build
 docker compose --profile tools run --rm --entrypoint sh wpcli /scripts/setup.sh
 ```
 
-- الحاوية: المنفذ `8088`
-- عنوان ووردبريس العام: `https://magdyhelalcorp.infinityfree.io`
+- الحاوية: المنفذ `8088` (ربط فقط)
+- عنوان ووردبريس العام: `https://helal.co`
 - المستخدم: من `WP_ADMIN_USER` في `.env` (افتراضي `admin`)
 - كلمة المرور: من `WP_ADMIN_PASSWORD` في `.env` — لا تُحفظ فارغة في Git
 
-للتفاصيل ومعاينة محلية بحتة عبر `http://localhost:8088` انظر **[HOSTING.md](HOSTING.md)** القسم B.
+للتفاصيل والنشر على الـ VPS انظر **[HOSTING.md](HOSTING.md)**.
 
 **غيّر كلمة مرور الأدمن قبل أي نشر.** لا تضع كلمة الأدمن داخل صورة Docker Hub العامة. لا ترفع ملف `.env`.
 
@@ -88,7 +90,7 @@ zip -r magdy-helal-corp-screenshots.zip screenshots
 | `06-projects.png` | مشاريعنا |
 | `07-news.png` | الأخبار |
 | `08-contact.png` | تواصل معنا |
-| `09-header-phone-desktop.png` | الرأس على سطح المكتب — الهاتف `+201000354045` |
+| `09-header-phone-desktop.png` | الرأس على سطح المكتب — الهاتف `+0224051171` · `+0224051169` |
 | `10-home-mobile-375.png` | الرئيسية على الجوال (375) |
 | `10b-home-mobile-menu.png` | قائمة الجوال المفتوحة |
 | `11-home-tablet-768.png` | الرئيسية على الجهاز اللوحي (768) |
@@ -114,7 +116,7 @@ zip -r magdy-helal-corp-screenshots.zip screenshots
 ## المعمارية
 
 ```
-HOSTING.md                  خطوات InfinityFree (A) و Docker (B)
+HOSTING.md                  VPS: Docker + nginx على /opt/magdyHelalCorporation
 docker-compose.yml          تطوير محلي: WordPress + MySQL 8 + Redis 7 + ربط القالب
 docker-compose.prod.yml     تشغيل الصورة المنشورة + MySQL + Redis
 docker-compose.server.yml   VPS: ربط 127.0.0.1:8088:80 و WP_HOME من البيئة
@@ -130,8 +132,8 @@ screenshots/                لقطات للعميل
 ```
 
 - **WordPress** يخدم الصفحات والقالب.
-- **MySQL** يخزن المحتوى. على InfinityFree استخدم أسماء القاعدة من لوحة التحكم (غالباً مسبوقة)، وليس بالضرورة `magdi` / `magdi_hilal`.
-- **Redis** كاش اختياري في Docker. على الاستضافة المشتركة الموقع يعمل بدون Redis.
+- **MySQL** يخزن المحتوى. على Docker الأسماء الافتراضية `magdi` / `magdi_hilal`.
+- **Redis** كاش اختياري في Docker. بدون Redis الموقع يعمل.
 - القالب لا يعتمد على Elementor. التعديل إما من الصفحات/أنواع المحتوى أو من ملفات القالب.
 
 أنواع محتوى إضافية في لوحة التحكم: الخدمات، فريق العمل، العملاء، المشاريع.
@@ -148,7 +150,7 @@ screenshots/                لقطات للعميل
 
 ## مستشار M.H CORP (الدردشة)
 
-زر ذهبي في عمود الأزرار العائمة (تحت الهاتف وواتساب) يفتح لوحة **مستشار M.H CORP** على كل الصفحات. يقبل العربية أو الإنجليزية، ويرد أساساً بالعربية (مع سطر إنجليزي قصير إن كان السؤال بالإنجليزية).
+زر ذهبي عائم يفتح لوحة **مستشار M.H CORP** على كل الصفحات. يقبل العربية أو الإنجليزية، ويرد أساساً بالعربية (مع سطر إنجليزي قصير إن كان السؤال بالإنجليزية). زر واتساب لا يظهر ما دام لا يوجد رقم جوال.
 
 المسار الافتراضي يعمل **بدون مفتاح OpenAI**: موجّه وكلاء في PHP (`guide` / `tax` / `audit` / `accounting` / `economy`) يسترجع مقاطع من جدول المعرفة في MySQL ويركب رداً مهنياً. أزرار الصفحات تُبنى من `home_url()` وفق عنوان الموقع في الإعدادات.
 
@@ -202,13 +204,13 @@ docker push momousa1997/magdyhelalcorp:latest
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-`WP_HOME` و `WP_SITEURL` يُقرآن من `.env` والافتراضي هو `https://magdyhelalcorp.infinityfree.io`.
+`WP_HOME` و `WP_SITEURL` يُقرآن من `.env` والافتراضي هو `https://helal.co`.
 
 ## بعد الرفع على الدومين
 
 انظر **[HOSTING.md](HOSTING.md)**. باختصار:
 
-1. Settings → General: العنوانان = `https://magdyhelalcorp.infinityfree.io`
+1. Settings → General: العنوانان = `https://helal.co`
 2. غيّر كلمة مرور `admin`
 3. راجع الهاتف والبريد والعنوان في المخصص
 4. ارفع شعارات العملاء الحقيقية وصور الفريق
@@ -216,7 +218,7 @@ docker compose -f docker-compose.prod.yml up -d
 ## ملاحظات
 
 - الأرقام الإحصائية (سنوات / عملاء) تقديرية للعرض. صحّحها من المخصص.
-- واتساب يستخدم الرقم الدولي بدون `+`: `201000354045`. الهاتف المعروض: `+201000354045` (اتجاه LTR حتى لا ينعكس في العربية).
+- الهاتف المعروض: `+0224051171` و `+0224051169` داخل `<bdi dir="ltr">` حتى لا تنعكس الأرقام في العربية. روابط الاتصال: `tel:+20224051171` و `tel:+20224051169`. واتساب مخفي إلى أن يُضاف جوال في المخصص.
 - إذا ظهرت صفحة ووردبريس الافتراضية بدل القالب، أعد تشغيل `setup.sh` أو فعّل القالب من لوحة التحكم.
 - إذا فشل Redis، الموقع يعمل بدون كاش.
 # magdyHelalCorporation

@@ -22,7 +22,7 @@ get_header();
                     <h2>قصة المكتب</h2>
                     <p><?php echo esc_html(mha_mod('mha_about_lead', mha_defaults()['about_lead'])); ?></p>
                     <p>المكتب يخدم شركات وليس أفراداً بالدرجة الأولى: إمساك دفاتر، أعمال ضريبية، مراجعة، واستشارات تساعد الإدارة على قراءة المركز المالي قبل أن تتحول المشكلة إلى فحص أو خسائر دفترية.</p>
-                    <p>العنوان: <?php echo esc_html(mha_mod('mha_address', mha_defaults()['address'])); ?>. للتواصل: <?php echo mha_phone_html(); ?> — <span dir="ltr"><?php echo esc_html(mha_mod('mha_email', mha_defaults()['email'])); ?></span></p>
+                    <p>العنوان: <?php echo esc_html(mha_mod('mha_address', mha_defaults()['address'])); ?>. للتواصل: <?php echo mha_phones_inline(); ?> — <span dir="ltr"><?php echo esc_html(mha_public_email()); ?></span></p>
                 </div>
             </div>
             <div class="col-lg-6 mb-4">

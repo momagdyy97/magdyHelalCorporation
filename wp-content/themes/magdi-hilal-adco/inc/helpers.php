@@ -32,17 +32,42 @@ function mha_page_url($slug)
     return $page ? get_permalink($page) : home_url('/' . $slug . '/');
 }
 
+function mha_is_retired_phone($raw)
+{
+    $digits = preg_replace('/\D+/', '', (string) $raw);
+    return $digits !== '' && strpos($digits, '1000354045') !== false;
+}
+
+function mha_public_email()
+{
+    $email = (string) mha_mod('mha_email', mha_defaults()['email']);
+    $blocked = ['momagdyy97@gmail.com', 'magdy.hilal@co'];
+    foreach ($blocked as $old) {
+        if (strcasecmp($email, $old) === 0) {
+            return mha_defaults()['email'];
+        }
+    }
+    return $email !== '' ? $email : mha_defaults()['email'];
+}
+
 function mha_phone_digits($raw = null)
 {
     $raw = $raw ?? mha_mod('mha_phone', mha_defaults()['phone']);
-    $digits = preg_replace('/\D+/', '', (string) $raw);
-    if ($digits === '') {
-        return '201000354045';
+    if (mha_is_retired_phone($raw)) {
+        $raw = mha_defaults()['phone'];
     }
-    if (strpos($digits, '20') === 0) {
+    $digits = preg_replace('/\D+/', '', (string) $raw);
+    if ($digits === '' || mha_is_retired_phone($digits)) {
+        return '';
+    }
+    if (strpos($digits, '20') === 0 && strlen($digits) >= 11) {
         return $digits;
     }
-    if (strpos($digits, '0') === 0) {
+    // Cairo landline 02-XXXXXXXX → +20 2 XXXXXXXX (drop trunk 0 of 02).
+    if (preg_match('/^02\d{8}$/', $digits)) {
+        return '20' . substr($digits, 1);
+    }
+    if (isset($digits[0]) && $digits[0] === '0') {
         return '2' . $digits;
     }
     return $digits;
@@ -50,44 +75,146 @@ function mha_phone_digits($raw = null)
 
 function mha_phone_display($raw = null)
 {
-    return '+' . mha_phone_digits($raw);
+    $raw = $raw ?? mha_mod('mha_phone', mha_defaults()['phone']);
+    if (mha_is_retired_phone($raw)) {
+        $raw = mha_defaults()['phone'];
+    }
+    $raw = trim((string) $raw);
+    if ($raw === '') {
+        return '';
+    }
+    if (isset($raw[0]) && $raw[0] === '+') {
+        $rest = preg_replace('/\D+/', '', substr($raw, 1));
+        return $rest === '' ? '' : '+' . $rest;
+    }
+    $digits = preg_replace('/\D+/', '', $raw);
+    return $digits === '' ? '' : '+' . $digits;
 }
 
 function mha_tel_href($raw = null)
 {
-    return 'tel:' . mha_phone_display($raw);
+    $digits = mha_phone_digits($raw);
+    return $digits === '' ? '' : 'tel:+' . $digits;
 }
 
-function mha_phone_html($extra_class = '')
+function mha_phone_html($raw = null, $extra_class = '')
 {
+    $display = mha_phone_display($raw);
+    if ($display === '') {
+        return '';
+    }
     $class = trim('mha-phone ' . $extra_class);
     return sprintf(
         '<bdi class="%s" dir="ltr">%s</bdi>',
         esc_attr($class),
-        esc_html(mha_phone_display())
+        esc_html($display)
     );
+}
+
+function mha_phone_anchor($raw = null, $extra_class = '')
+{
+    $href = mha_tel_href($raw);
+    $html = mha_phone_html($raw);
+    if ($href === '' || $html === '') {
+        return '';
+    }
+    $class = trim($extra_class);
+    return sprintf(
+        '<a href="%s"%s dir="ltr">%s</a>',
+        esc_url($href),
+        $class !== '' ? ' class="' . esc_attr($class) . '"' : '',
+        $html
+    );
+}
+
+function mha_office_phones()
+{
+    $d = mha_defaults();
+    $candidates = [
+        mha_mod('mha_phone', $d['phone']),
+        mha_mod('mha_phone_2', $d['phone_2']),
+        mha_mod('mha_phone_alt', $d['phone_alt']),
+    ];
+    $out = [];
+    $seen = [];
+    foreach ($candidates as $raw) {
+        if (mha_is_retired_phone($raw)) {
+            continue;
+        }
+        $display = mha_phone_display($raw);
+        if ($display === '' || isset($seen[$display])) {
+            continue;
+        }
+        $seen[$display] = true;
+        $out[] = $raw;
+    }
+    if ($out === []) {
+        return [$d['phone'], $d['phone_2']];
+    }
+    return $out;
+}
+
+function mha_phones_display($sep = ' — ')
+{
+    $parts = [];
+    foreach (mha_office_phones() as $raw) {
+        $disp = mha_phone_display($raw);
+        if ($disp !== '') {
+            $parts[] = $disp;
+        }
+    }
+    return implode($sep, $parts);
+}
+
+function mha_phones_inline($anchor_class = '', $sep = ' · ')
+{
+    $parts = [];
+    foreach (mha_office_phones() as $raw) {
+        $html = mha_phone_anchor($raw, $anchor_class);
+        if ($html !== '') {
+            $parts[] = $html;
+        }
+    }
+    return implode($sep, $parts);
+}
+
+function mha_is_egypt_mobile($digits)
+{
+    return (bool) preg_match('/^20(10|11|12|15)\d{8}$/', (string) $digits);
 }
 
 function mha_whatsapp_digits()
 {
     $raw = mha_mod('mha_whatsapp', mha_defaults()['whatsapp']);
+    if (trim((string) $raw) === '' || mha_is_retired_phone($raw)) {
+        return '';
+    }
     $digits = preg_replace('/\D+/', '', (string) $raw);
     if ($digits === '') {
-        return mha_phone_digits();
+        return '';
     }
-    if (strpos($digits, '20') === 0) {
-        return $digits;
+    if (strpos($digits, '20') !== 0) {
+        if (preg_match('/^02\d{8}$/', $digits)) {
+            return '';
+        }
+        if (isset($digits[0]) && $digits[0] === '0') {
+            $digits = '2' . $digits;
+        }
     }
-    if (strpos($digits, '0') === 0) {
-        return '2' . $digits;
+    if (mha_is_retired_phone($digits) || !mha_is_egypt_mobile($digits)) {
+        return '';
     }
     return $digits;
 }
 
 function mha_whatsapp_link()
 {
+    $digits = mha_whatsapp_digits();
+    if ($digits === '') {
+        return '';
+    }
     $text = rawurlencode('السلام عليكم، أرغب في الاستفسار عن خدمات مكتب مجدي هلال — M.H CORP.');
-    return 'https://wa.me/' . mha_whatsapp_digits() . '?text=' . $text;
+    return 'https://wa.me/' . $digits . '?text=' . $text;
 }
 
 function mha_defaults()
@@ -97,10 +224,11 @@ function mha_defaults()
         'firm_en'     => 'M.H CORP',
         'tagline'     => 'المحاسبة · الضرائب · المراجعة',
         'hours'       => 'السبت — الخميس · 9:00 ص — 5:00 م',
-        'phone'       => '+201000354045',
-        'phone_alt'   => '',
-        'whatsapp'    => '201000354045',
-        'email'       => 'momagdyy97@gmail.com',
+        'phone'       => '+0224051171',
+        'phone_2'     => '+0224051169',
+        'phone_alt'   => '+0224051169',
+        'whatsapp'    => '',
+        'email'       => 'info@helal.co',
         'address'     => 'مدينة نصر، القاهرة',
         'hero_kicker' => 'M.H CORP',
         'hero_title'  => 'خبرة محاسبية تقود قرارات أوضح',

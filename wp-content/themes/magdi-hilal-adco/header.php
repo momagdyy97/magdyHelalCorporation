@@ -20,14 +20,14 @@
     <div class="container">
         <div class="mha-topbar-inner">
             <div class="mha-topbar-contacts">
-                <a href="mailto:<?php echo esc_attr(mha_mod('mha_email', mha_defaults()['email'])); ?>" class="mha-top-link mha-top-email">
+                <a href="mailto:<?php echo esc_attr(mha_public_email()); ?>" class="mha-top-link mha-top-email">
                     <?php echo mha_icon('mail'); ?>
-                    <span dir="ltr"><?php echo esc_html(mha_mod('mha_email', mha_defaults()['email'])); ?></span>
+                    <span dir="ltr"><?php echo esc_html(mha_public_email()); ?></span>
                 </a>
-                <a href="<?php echo esc_url(mha_tel_href()); ?>" class="mha-top-link mha-top-phone" dir="ltr">
+                <span class="mha-top-link mha-top-phone">
                     <?php echo mha_icon('phone'); ?>
-                    <?php echo mha_phone_html(); ?>
-                </a>
+                    <?php echo mha_phones_inline(); ?>
+                </span>
             </div>
             <div class="mha-topbar-hours">
                 <?php echo mha_icon('clock'); ?>
@@ -41,7 +41,7 @@
     <nav class="navbar navbar-expand-xl navbar-light">
         <div class="container">
             <a class="navbar-brand mha-brand mb-0" href="<?php echo esc_url(home_url('/')); ?>" rel="home">
-                <img src="<?php echo esc_url(mha_img('logo.png')); ?>" alt="M.H CORP" class="mha-brand-logo custom-logo" width="240" height="40">
+                <img src="<?php echo esc_url(mha_img('logo.png')); ?>" alt="HELAL CORP — مكتب مجدي هلال" class="mha-brand-logo custom-logo" width="215" height="40">
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mhaNav" aria-controls="mhaNav" aria-expanded="false" aria-label="القائمة">
                 <span class="navbar-toggler-icon"></span>

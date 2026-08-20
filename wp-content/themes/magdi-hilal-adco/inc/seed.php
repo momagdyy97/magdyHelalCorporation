@@ -11,6 +11,10 @@ if (!defined('ABSPATH')) {
 
 function mha_maybe_seed()
 {
+    if ((int) get_option('mha_brand_version') < 6) {
+        mha_apply_branding(true);
+    }
+
     if (!is_admin() && php_sapi_name() !== 'cli') {
         return;
     }
@@ -18,10 +22,6 @@ function mha_maybe_seed()
     if (!get_option('mha_content_seeded')) {
         mha_seed_content();
         return;
-    }
-
-    if ((int) get_option('mha_brand_version') < 4) {
-        mha_apply_branding(true);
     }
 }
 add_action('init', 'mha_maybe_seed', 30);
@@ -200,7 +200,8 @@ function mha_apply_branding($force = true)
     $mods = [
         'mha_hours'         => $d['hours'],
         'mha_phone'         => $d['phone'],
-        'mha_phone_alt'     => $d['phone_alt'],
+        'mha_phone_2'       => $d['phone_2'],
+        'mha_phone_alt'     => $d['phone_2'],
         'mha_whatsapp'      => $d['whatsapp'],
         'mha_email'         => $d['email'],
         'mha_address'       => $d['address'],
@@ -223,7 +224,7 @@ function mha_apply_branding($force = true)
 
     mha_purge_ibrahim();
     mha_ensure_custom_logo(true);
-    update_option('mha_brand_version', 4);
+    update_option('mha_brand_version', 6);
 }
 
 function mha_strip_ibrahim_text($text)
